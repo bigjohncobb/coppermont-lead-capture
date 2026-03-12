@@ -1,0 +1,44 @@
+.cmlc-filter-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	gap: 12px;
+	margin: 12px 0;
+}
+
+.cmlc-filter-grid label {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	font-weight: 600;
+}
+
+.cmlc-kpi-grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(180px, 1fr));
+	gap: 12px;
+	margin: 18px 0;
+}
+
+.cmlc-kpi-card {
+	border: 1px solid #dcdcde;
+	border-radius: 8px;
+	padding: 16px;
+	background: #fff;
+}
+
+.cmlc-kpi-card span {
+	display: block;
+	color: #50575e;
+}
+
+.cmlc-kpi-card strong {
+	font-size: 26px;
+	line-height: 1.2;
+}
+
+.cmlc-bar {
+	position: relative;
+	padding: 2px 8px;
+	border-radius: 4px;
+	background: linear-gradient(90deg, #2271b1 var(--bar-width), #f0f0f1 var(--bar-width));
+}

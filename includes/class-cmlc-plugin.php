@@ -11,6 +11,8 @@ require_once CMLC_PATH . 'includes/class-cmlc-settings.php';
 require_once CMLC_PATH . 'includes/class-cmlc-shortcodes.php';
 require_once CMLC_PATH . 'includes/class-cmlc-renderer.php';
 require_once CMLC_PATH . 'includes/class-cmlc-ajax.php';
+require_once CMLC_PATH . 'includes/admin/class-cmlc-analytics-page.php';
+require_once CMLC_PATH . 'includes/admin/class-cmlc-admin.php';
 
 class CMLC_Plugin {
 	/**
@@ -66,7 +68,9 @@ class CMLC_Plugin {
 	 * @return void
 	 */
 	public function bootstrap() {
-		new CMLC_Settings();
+		$settings       = new CMLC_Settings();
+		$analytics_page = new CMLC_Analytics_Page();
+		new CMLC_Admin( $settings, $analytics_page );
 		new CMLC_Shortcodes();
 		new CMLC_Renderer();
 		new CMLC_Ajax();

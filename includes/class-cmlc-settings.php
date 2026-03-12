@@ -19,7 +19,6 @@ class CMLC_Settings {
 	 * Constructor.
 	 */
 	public function __construct() {
-		add_action( 'admin_menu', array( $this, 'add_settings_page' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
 	}
 
@@ -54,20 +53,6 @@ class CMLC_Settings {
 		);
 	}
 
-	/**
-	 * Adds settings page.
-	 *
-	 * @return void
-	 */
-	public function add_settings_page() {
-		add_options_page(
-			'Coppermont Lead Capture',
-			'Lead Capture',
-			'manage_options',
-			'cmlc-settings',
-			array( $this, 'render_page' )
-		);
-	}
 
 	/**
 	 * Registers settings.
@@ -172,9 +157,6 @@ class CMLC_Settings {
 				</table>
 				<?php submit_button(); ?>
 			</form>
-			<h2>Analytics</h2>
-			<p><strong>Infobar Shows:</strong> <?php echo esc_html( (string) $settings['analytics_impressions'] ); ?></p>
-			<p><strong>Email Submissions:</strong> <?php echo esc_html( (string) $settings['analytics_submissions'] ); ?></p>
 		</div>
 		<?php
 	}
