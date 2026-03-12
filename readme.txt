@@ -30,4 +30,7 @@ Optional attributes:
 - Admin settings are protected by `manage_options` capability checks.
 
 == Uninstall ==
-On uninstall, plugin settings are removed via `uninstall.php`.
+Data lifecycle is controlled by the **Keep Data on Uninstall** setting in **Settings > Lead Capture** (enabled by default).
+
+- Enabled (default): uninstall keeps all plugin-owned data.
+- Disabled: uninstall permanently deletes all plugin-owned data managed by the data manager, including options, transients, and custom database tables (including future entities added through its hooks).

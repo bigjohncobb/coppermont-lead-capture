@@ -44,7 +44,10 @@ Coppermont Lead Capture is a lightweight WordPress plugin for lead generation us
 
 ## Uninstall Behavior
 
-The plugin includes `uninstall.php` and removes the `cmlc_settings` option when uninstalled via WordPress.
+Data lifecycle is admin-controlled via **Settings → Lead Capture → Keep Data on Uninstall** (enabled by default).
+
+- **Enabled (default):** uninstall keeps all plugin-owned data.
+- **Disabled:** uninstall permanently purges all plugin-owned data managed by the data manager, including plugin options, plugin transients, and plugin custom database tables (including future entities registered through data-manager hooks).
 
 ## Extensibility
 
