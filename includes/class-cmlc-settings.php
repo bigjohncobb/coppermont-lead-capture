@@ -83,7 +83,7 @@ class CMLC_Settings {
 	 * @return void
 	 */
 	public function handle_tab_save() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! CMLC_Admin_Security::current_user_can_manage_options() ) {
 			return;
 		}
 
