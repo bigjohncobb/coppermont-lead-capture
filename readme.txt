@@ -16,6 +16,11 @@ Key capabilities:
 - Scheduler windows and repetition control.
 - Analytics counters for impressions (times shown) and submissions.
 
+Admin navigation:
+- **Lead Capture > Dashboard** for overview metrics.
+- **Lead Capture > Campaigns / Leads / Analytics** for focused views.
+- **Lead Capture > Settings** to configure infobar behavior.
+
 == Shortcodes ==
 Use `[coppermont_infobar]` to embed a lead capture form inline.
 
