@@ -26,7 +26,7 @@ Coppermont Lead Capture is a lightweight WordPress plugin for lead generation us
 
 1. Upload the plugin folder to `wp-content/plugins/coppermont-lead-capture`.
 2. Activate **Coppermont Lead Capture** from **Plugins**.
-3. Configure options in **Settings > Lead Capture**.
+3. Configure options in **Lead Capture > Settings**.
 
 ## Shortcode
 
@@ -53,3 +53,13 @@ On successful lead submission, the plugin fires:
 - `cmlc_lead_submitted( string $email, array $settings )`
 
 Use this action to forward leads to CRM or email marketing tools.
+
+
+## Admin Navigation
+
+Use the top-level **Lead Capture** admin menu:
+- Dashboard
+- Campaigns
+- Leads
+- Analytics
+- Settings
