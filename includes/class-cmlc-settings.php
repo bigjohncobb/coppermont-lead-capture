@@ -38,6 +38,9 @@ class CMLC_Settings {
 			'text_color'                 => '#ffffff',
 			'button_color'               => '#f59e0b',
 			'button_text_color'          => '#111827',
+			'bar_width'                  => 'calc(100% - 32px)',
+			'bar_height'                 => 'auto',
+			'bar_opacity'                => 1,
 			'scroll_trigger_percent'     => 40,
 			'time_delay_seconds'         => 8,
 			'repetition_cooldown_hours'  => 24,
@@ -104,6 +107,9 @@ class CMLC_Settings {
 		$output['text_color']                = sanitize_hex_color( $output['text_color'] ) ?: $defaults['text_color'];
 		$output['button_color']              = sanitize_hex_color( $output['button_color'] ) ?: $defaults['button_color'];
 		$output['button_text_color']         = sanitize_hex_color( $output['button_text_color'] ) ?: $defaults['button_text_color'];
+		$output['bar_width']                 = $this->sanitize_bar_dimension( $output['bar_width'], $defaults['bar_width'], false );
+		$output['bar_height']                = $this->sanitize_bar_dimension( $output['bar_height'], $defaults['bar_height'], true );
+		$output['bar_opacity']               = max( 0, min( 1, (float) $output['bar_opacity'] ) );
 		$output['scroll_trigger_percent']    = max( 0, min( 100, absint( $output['scroll_trigger_percent'] ) ) );
 		$output['time_delay_seconds']        = max( 0, absint( $output['time_delay_seconds'] ) );
 		$output['repetition_cooldown_hours'] = max( 1, absint( $output['repetition_cooldown_hours'] ) );
@@ -119,6 +125,45 @@ class CMLC_Settings {
 		$output['analytics_submissions']     = isset( $output['analytics_submissions'] ) ? absint( $output['analytics_submissions'] ) : 0;
 
 		return $output;
+	}
+
+	/**
+	 * Sanitizes width/height controls.
+	 *
+	 * Supports px, %, vw and plain numeric values (treated as px).
+	 *
+	 * @param mixed  $value Raw value.
+	 * @param string $fallback Fallback setting value.
+	 * @param bool   $allow_auto Whether auto keyword is allowed.
+	 * @return string
+	 */
+	private function sanitize_bar_dimension( $value, $fallback, $allow_auto = false ) {
+		$value = strtolower( trim( (string) $value ) );
+
+		if ( '' === $value ) {
+			return $fallback;
+		}
+
+		if ( $allow_auto && 'auto' === $value ) {
+			return 'auto';
+		}
+
+		if ( ! preg_match( '/^([0-9]+(?:\.[0-9]+)?)(px|%|vw)?$/', $value, $matches ) ) {
+			return $fallback;
+		}
+
+		$number = (float) $matches[1];
+		$unit   = isset( $matches[2] ) ? $matches[2] : 'px';
+
+		if ( '%' === $unit || 'vw' === $unit ) {
+			$number = max( 20, min( 100, $number ) );
+		} else {
+			$number = max( 240, min( 1400, $number ) );
+		}
+
+		$formatted = ( 0.0 === fmod( $number, 1 ) ) ? (string) (int) $number : (string) $number;
+
+		return $formatted . $unit;
 	}
 
 	/**
@@ -158,6 +203,9 @@ class CMLC_Settings {
 					<tr><th scope="row">Text Color</th><td><input type="color" name="cmlc_settings[text_color]" value="<?php echo esc_attr( $settings['text_color'] ); ?>"></td></tr>
 					<tr><th scope="row">Button Color</th><td><input type="color" name="cmlc_settings[button_color]" value="<?php echo esc_attr( $settings['button_color'] ); ?>"></td></tr>
 					<tr><th scope="row">Button Text Color</th><td><input type="color" name="cmlc_settings[button_text_color]" value="<?php echo esc_attr( $settings['button_text_color'] ); ?>"></td></tr>
+					<tr><th scope="row">Bar Width</th><td><input class="regular-text" name="cmlc_settings[bar_width]" value="<?php echo esc_attr( $settings['bar_width'] ); ?>"><p class="description">Use px, %, or vw (for example: 960px, 90%, 92vw). Large widths are constrained on mobile for usability.</p></td></tr>
+					<tr><th scope="row">Bar Height</th><td><input class="regular-text" name="cmlc_settings[bar_height]" value="<?php echo esc_attr( $settings['bar_height'] ); ?>"><p class="description">Use auto, px, %, or vw. On small screens, the bar can grow naturally to fit content.</p></td></tr>
+					<tr><th scope="row">Bar Opacity</th><td><input type="number" min="0" max="1" step="0.05" name="cmlc_settings[bar_opacity]" value="<?php echo esc_attr( (string) $settings['bar_opacity'] ); ?>"><p class="description">0 = fully transparent, 1 = fully opaque. Useful for blending with page content behind the bar.</p></td></tr>
 					<tr><th scope="row">Scroll Trigger %</th><td><input type="number" min="0" max="100" name="cmlc_settings[scroll_trigger_percent]" value="<?php echo esc_attr( $settings['scroll_trigger_percent'] ); ?>"></td></tr>
 					<tr><th scope="row">Delay Seconds</th><td><input type="number" min="0" name="cmlc_settings[time_delay_seconds]" value="<?php echo esc_attr( $settings['time_delay_seconds'] ); ?>"></td></tr>
 					<tr><th scope="row">Cooldown Hours</th><td><input type="number" min="1" name="cmlc_settings[repetition_cooldown_hours]" value="<?php echo esc_attr( $settings['repetition_cooldown_hours'] ); ?>"></td></tr>

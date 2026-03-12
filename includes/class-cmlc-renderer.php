@@ -60,11 +60,15 @@ class CMLC_Renderer {
 		}
 
 		$style = sprintf(
-			'--cmlc-bg:%1$s;--cmlc-text:%2$s;--cmlc-btn:%3$s;--cmlc-btn-text:%4$s;',
+			'--cmlc-bg:%1$s;--cmlc-bg-rgb:%2$s;--cmlc-opacity:%3$s;--cmlc-text:%4$s;--cmlc-btn:%5$s;--cmlc-btn-text:%6$s;--cmlc-width:%7$s;--cmlc-max-width:calc(100vw - 32px);--cmlc-min-height:%8$s;',
 			esc_attr( $settings['bg_color'] ),
+			esc_attr( $this->hex_to_rgb( (string) $settings['bg_color'] ) ),
+			esc_attr( (string) $settings['bar_opacity'] ),
 			esc_attr( $settings['text_color'] ),
 			esc_attr( $settings['button_color'] ),
-			esc_attr( $settings['button_text_color'] )
+			esc_attr( $settings['button_text_color'] ),
+			esc_attr( $settings['bar_width'] ),
+			esc_attr( $settings['bar_height'] )
 		);
 
 		include CMLC_PATH . 'templates/infobar.php';
@@ -159,5 +163,32 @@ class CMLC_Renderer {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Converts a hex color string to RGB triplet.
+	 *
+	 * @param string $hex Hex color.
+	 * @return string
+	 */
+	private function hex_to_rgb( $hex ) {
+		$hex = ltrim( (string) $hex, '#' );
+
+		if ( 3 === strlen( $hex ) ) {
+			$hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+		}
+
+		if ( 6 !== strlen( $hex ) || ! ctype_xdigit( $hex ) ) {
+			return '31,41,55';
+		}
+
+		return implode(
+			',',
+			array(
+				hexdec( substr( $hex, 0, 2 ) ),
+				hexdec( substr( $hex, 2, 2 ) ),
+				hexdec( substr( $hex, 4, 2 ) ),
+			)
+		);
 	}
 }
