@@ -4,13 +4,17 @@
   right: 16px;
   bottom: 16px;
   z-index: 99999;
+  width: min(var(--cmlc-width, 960px), calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
+  min-height: var(--cmlc-height, 96px);
+  margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 12px;
   align-items: center;
   padding: 16px;
   border-radius: 12px;
-  background: var(--cmlc-bg, #1f2937);
+  background: rgba(var(--cmlc-bg-rgb, 31, 41, 55), var(--cmlc-opacity, 0.95));
   color: var(--cmlc-text, #fff);
   transform: translateY(130%);
   opacity: 0;
@@ -77,6 +81,9 @@
     left: 8px;
     right: 8px;
     bottom: 8px;
+    width: min(var(--cmlc-width, 960px), calc(100vw - 16px));
+    max-width: calc(100vw - 16px);
+    min-height: auto;
     grid-template-columns: 1fr;
   }
 
