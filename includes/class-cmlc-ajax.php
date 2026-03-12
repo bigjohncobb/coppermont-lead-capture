@@ -30,11 +30,20 @@ class CMLC_Ajax {
 
 		check_ajax_referer( 'cmlc_nonce', 'nonce' );
 
+		$campaign_id = isset( $_POST['campaign_id'] ) ? absint( wp_unslash( $_POST['campaign_id'] ) ) : 0;
+		$campaign    = CMLC_Campaigns::resolve_campaign( $campaign_id );
+
 		$settings                          = CMLC_Settings::get();
 		$settings['analytics_impressions'] = absint( $settings['analytics_impressions'] ) + 1;
 		update_option( CMLC_Settings::OPTION_KEY, $settings );
+		CMLC_Campaigns::upsert_analytics( (int) $campaign['campaign_id'], 1, 0 );
 
-		wp_send_json_success( array( 'impressions' => $settings['analytics_impressions'] ) );
+		wp_send_json_success(
+			array(
+				'impressions' => $settings['analytics_impressions'],
+				'campaignId'  => (int) $campaign['campaign_id'],
+			)
+		);
 	}
 
 	/**
@@ -54,14 +63,19 @@ class CMLC_Ajax {
 			wp_send_json_error( array( 'message' => 'Please provide a valid email.' ), 400 );
 		}
 
+		$campaign_id = isset( $_POST['campaign_id'] ) ? absint( wp_unslash( $_POST['campaign_id'] ) ) : 0;
+		$campaign    = CMLC_Campaigns::resolve_campaign( $campaign_id );
+
 		$settings                          = CMLC_Settings::get();
 		$settings['analytics_submissions'] = absint( $settings['analytics_submissions'] ) + 1;
 		update_option( CMLC_Settings::OPTION_KEY, $settings );
+		CMLC_Campaigns::upsert_analytics( (int) $campaign['campaign_id'], 0, 1 );
+		CMLC_Campaigns::insert_lead( $email, (int) $campaign['campaign_id'] );
 
 		/**
 		 * Fires after lead form submission for CRM integrations.
 		 */
-		do_action( 'cmlc_lead_submitted', $email, $settings );
+		do_action( 'cmlc_lead_submitted', $email, $campaign );
 
 		wp_send_json_success( array( 'message' => 'Thanks! You are subscribed.' ) );
 	}

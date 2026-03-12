@@ -175,6 +175,39 @@ class CMLC_Settings {
 			<h2>Analytics</h2>
 			<p><strong>Infobar Shows:</strong> <?php echo esc_html( (string) $settings['analytics_impressions'] ); ?></p>
 			<p><strong>Email Submissions:</strong> <?php echo esc_html( (string) $settings['analytics_submissions'] ); ?></p>
+			<?php $campaign_rows = CMLC_Campaigns::campaign_performance_rows(); ?>
+			<h2>Campaign Performance</h2>
+			<?php if ( empty( $campaign_rows ) ) : ?>
+				<p>No campaign records found yet.</p>
+			<?php else : ?>
+				<?php
+				$active_count   = count( array_filter( $campaign_rows, static function( $row ) { return 'active' === $row['status']; } ) );
+				$inactive_count = count( $campaign_rows ) - $active_count;
+				?>
+				<p><strong>Active campaigns:</strong> <?php echo esc_html( (string) $active_count ); ?> &nbsp;|&nbsp; <strong>Inactive campaigns:</strong> <?php echo esc_html( (string) $inactive_count ); ?></p>
+				<table class="widefat striped">
+					<thead>
+						<tr>
+							<th>Campaign</th>
+							<th>Status</th>
+							<th>Impressions</th>
+							<th>Submissions</th>
+							<th>Conversion Rate</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ( $campaign_rows as $row ) : ?>
+							<tr>
+								<td><a href="<?php echo esc_url( admin_url( 'post.php?post=' . absint( $row['campaign_id'] ) . '&action=edit' ) ); ?>"><?php echo esc_html( $row['title'] ); ?></a></td>
+								<td><?php echo esc_html( ucfirst( $row['status'] ) ); ?></td>
+								<td><?php echo esc_html( (string) $row['impressions'] ); ?></td>
+								<td><?php echo esc_html( (string) $row['submissions'] ); ?></td>
+								<td><?php echo esc_html( (string) $row['conversion'] ); ?>%</td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+			<?php endif; ?>
 		</div>
 		<?php
 	}

@@ -22,9 +22,9 @@ class CMLC_Renderer {
 	 * @return void
 	 */
 	public function enqueue() {
-		$settings = CMLC_Settings::get();
+		$campaign = CMLC_Campaigns::resolve_campaign();
 
-		if ( empty( $settings['enabled'] ) || ! $this->is_eligible_page( $settings ) ) {
+		if ( empty( $campaign['enabled'] ) || ! $this->is_eligible_page( $campaign ) ) {
 			return;
 		}
 
@@ -37,12 +37,13 @@ class CMLC_Renderer {
 			array(
 				'ajaxUrl'               => admin_url( 'admin-ajax.php' ),
 				'nonce'                 => wp_create_nonce( 'cmlc_nonce' ),
-				'scrollPercent'         => (int) $settings['scroll_trigger_percent'],
-				'timeDelay'             => (int) $settings['time_delay_seconds'],
-				'cooldownHours'         => (int) $settings['repetition_cooldown_hours'],
-				'maxViews'              => (int) $settings['max_views'],
-				'enableExitIntent'      => ! empty( $settings['enable_exit_intent'] ),
-				'enableMobile'          => ! empty( $settings['enable_mobile'] ),
+				'scrollPercent'         => (int) $campaign['scroll_trigger_percent'],
+				'timeDelay'             => (int) $campaign['time_delay_seconds'],
+				'cooldownHours'         => (int) $campaign['repetition_cooldown_hours'],
+				'maxViews'              => (int) $campaign['max_views'],
+				'enableExitIntent'      => ! empty( $campaign['enable_exit_intent'] ),
+				'enableMobile'          => ! empty( $campaign['enable_mobile'] ),
+				'campaignId'            => (int) $campaign['campaign_id'],
 			)
 		);
 	}
@@ -53,18 +54,21 @@ class CMLC_Renderer {
 	 * @return void
 	 */
 	public function render_infobar() {
-		$settings = CMLC_Settings::get();
+		$settings = CMLC_Campaigns::resolve_campaign();
 
 		if ( empty( $settings['enabled'] ) || ! $this->is_eligible_page( $settings ) ) {
 			return;
 		}
 
 		$style = sprintf(
-			'--cmlc-bg:%1$s;--cmlc-text:%2$s;--cmlc-btn:%3$s;--cmlc-btn-text:%4$s;',
+			'--cmlc-bg:%1$s;--cmlc-text:%2$s;--cmlc-btn:%3$s;--cmlc-btn-text:%4$s;opacity:%5$s;max-width:%6$spx;min-height:%7$spx;',
 			esc_attr( $settings['bg_color'] ),
 			esc_attr( $settings['text_color'] ),
 			esc_attr( $settings['button_color'] ),
-			esc_attr( $settings['button_text_color'] )
+			esc_attr( $settings['button_text_color'] ),
+			esc_attr( (string) ( (float) $settings['opacity'] / 100 ) ),
+			esc_attr( (string) $settings['width'] ),
+			esc_attr( (string) $settings['height'] )
 		);
 
 		include CMLC_PATH . 'templates/infobar.php';

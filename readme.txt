@@ -14,12 +14,15 @@ Key capabilities:
 - Scroll, time delay, and exit-intent triggers.
 - Referral detection and page-level targeting.
 - Scheduler windows and repetition control.
-- Analytics counters for impressions (times shown) and submissions.
+- Campaign-level analytics counters for impressions and submissions.
+- Conversion-rate ranking and active/inactive status widgets in admin.
+- Campaign records with design, targeting, schedule, trigger controls, dimensions, opacity, and priority.
 
 == Shortcodes ==
 Use `[coppermont_infobar]` to embed a lead capture form inline.
 
 Optional attributes:
+- `campaign_id`
 - `headline`
 - `body`
 - `button`

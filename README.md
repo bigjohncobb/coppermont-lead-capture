@@ -17,8 +17,11 @@ Coppermont Lead Capture is a lightweight WordPress plugin for lead generation us
   - Max views per visitor.
   - Cooldown after dismiss.
 - Analytics:
-  - Impression count (times shown).
-  - Submission count.
+  - Impression/submission tracking per campaign.
+  - Campaign conversion-rate rankings in admin.
+- Campaign management:
+  - Lead Campaign custom post type with design, trigger, targeting, schedule, dimensions, opacity, priority, and status settings.
+  - Automatic migration of existing global settings into a default campaign.
 - Shortcode support:
   - `[coppermont_infobar]`
 
@@ -33,6 +36,7 @@ Coppermont Lead Capture is a lightweight WordPress plugin for lead generation us
 ```text
 [coppermont_infobar]
 [coppermont_infobar headline="Get updates" body="Join our list" button="Subscribe"]
+[coppermont_infobar campaign_id="123"]
 ```
 
 ## Security Notes

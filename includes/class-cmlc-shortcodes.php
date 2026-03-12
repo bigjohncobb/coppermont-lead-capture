@@ -22,7 +22,18 @@ class CMLC_Shortcodes {
 	 * @return string
 	 */
 	public function render_infobar_shortcode( $atts ) {
-		$settings = CMLC_Settings::get();
+		$atts = shortcode_atts(
+			array(
+				'campaign_id' => 0,
+				'headline'    => '',
+				'body'        => '',
+				'button'      => '',
+			),
+			$atts,
+			'coppermont_infobar'
+		);
+
+		$settings = CMLC_Campaigns::resolve_campaign( absint( $atts['campaign_id'] ) );
 
 		wp_enqueue_style( 'cmlc-frontend', CMLC_URL . 'assets/css/frontend.css', array(), CMLC_VERSION );
 		wp_enqueue_script( 'cmlc-frontend', CMLC_URL . 'assets/js/frontend.js', array(), CMLC_VERSION, true );
@@ -38,21 +49,16 @@ class CMLC_Shortcodes {
 				'maxViews'         => (int) $settings['max_views'],
 				'enableExitIntent' => ! empty( $settings['enable_exit_intent'] ),
 				'enableMobile'     => ! empty( $settings['enable_mobile'] ),
+				'campaignId'       => (int) $settings['campaign_id'],
 			)
 		);
-		$atts     = shortcode_atts(
-			array(
-				'headline' => $settings['headline'],
-				'body'     => $settings['body'],
-				'button'   => $settings['button_text'],
-			),
-			$atts,
-			'coppermont_infobar'
-		);
+		$atts['headline'] = $atts['headline'] ? $atts['headline'] : $settings['headline'];
+		$atts['body']     = $atts['body'] ? $atts['body'] : $settings['body'];
+		$atts['button']   = $atts['button'] ? $atts['button'] : $settings['button_text'];
 
 		ob_start();
 		?>
-		<div class="cmlc-shortcode-wrap">
+		<div class="cmlc-shortcode-wrap" data-campaign-id="<?php echo esc_attr( (string) $settings['campaign_id'] ); ?>">
 			<div class="cmlc-shortcode-headline"><?php echo esc_html( $atts['headline'] ); ?></div>
 			<div class="cmlc-shortcode-body"><?php echo esc_html( $atts['body'] ); ?></div>
 			<form class="cmlc-shortcode-form" data-cmlc-form>
