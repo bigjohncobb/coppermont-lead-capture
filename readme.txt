@@ -30,4 +30,7 @@ Optional attributes:
 - Admin settings are protected by `manage_options` capability checks.
 
 == Uninstall ==
-On uninstall, plugin settings are removed via `uninstall.php`.
+The plugin adds a `keep_data_on_uninstall` admin setting (default: enabled).
+
+- Enabled: uninstall keeps all plugin-owned data.
+- Disabled: uninstall permanently purges all plugin-owned data via a centralized data manager (options/settings including analytics values, transients, and any custom tables/entities declared by the plugin).

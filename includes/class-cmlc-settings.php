@@ -51,6 +51,7 @@ class CMLC_Settings {
 			'schedule_end'               => '',
 			'analytics_impressions'      => 0,
 			'analytics_submissions'      => 0,
+			'keep_data_on_uninstall'     => 1,
 		);
 	}
 
@@ -117,6 +118,7 @@ class CMLC_Settings {
 		$output['schedule_end']              = sanitize_text_field( $output['schedule_end'] );
 		$output['analytics_impressions']     = isset( $output['analytics_impressions'] ) ? absint( $output['analytics_impressions'] ) : 0;
 		$output['analytics_submissions']     = isset( $output['analytics_submissions'] ) ? absint( $output['analytics_submissions'] ) : 0;
+		$output['keep_data_on_uninstall']    = empty( $output['keep_data_on_uninstall'] ) ? 0 : 1;
 
 		return $output;
 	}
@@ -169,6 +171,16 @@ class CMLC_Settings {
 					<tr><th scope="row">Page IDs</th><td><input class="regular-text" name="cmlc_settings[page_ids]" value="<?php echo esc_attr( $settings['page_ids'] ); ?>"><p class="description">Comma-separated post/page IDs.</p></td></tr>
 					<tr><th scope="row">Schedule Start</th><td><input type="datetime-local" name="cmlc_settings[schedule_start]" value="<?php echo esc_attr( $settings['schedule_start'] ); ?>"></td></tr>
 					<tr><th scope="row">Schedule End</th><td><input type="datetime-local" name="cmlc_settings[schedule_end]" value="<?php echo esc_attr( $settings['schedule_end'] ); ?>"></td></tr>
+					<tr>
+						<th scope="row">Keep Data on Uninstall</th>
+						<td>
+							<label>
+								<input type="checkbox" name="cmlc_settings[keep_data_on_uninstall]" value="1" <?php checked( 1, $settings['keep_data_on_uninstall'] ); ?>>
+								Keep plugin data when uninstalling.
+							</label>
+							<p class="description">If unchecked, uninstall permanently deletes all plugin-owned data (settings, analytics, transients, and any future plugin tables/entities).</p>
+						</td>
+					</tr>
 				</table>
 				<?php submit_button(); ?>
 			</form>
