@@ -60,9 +60,20 @@ class CMLC_Settings {
 	 * @return void
 	 */
 	public function add_settings_page() {
-		add_options_page(
+		add_menu_page(
 			'Coppermont Lead Capture',
 			'Lead Capture',
+			'manage_options',
+			'cmlc-settings',
+			array( $this, 'render_page' ),
+			'dashicons-email',
+			56
+		);
+
+		add_submenu_page(
+			'cmlc-settings',
+			'Settings',
+			'Settings',
 			'manage_options',
 			'cmlc-settings',
 			array( $this, 'render_page' )
@@ -134,6 +145,37 @@ class CMLC_Settings {
 	}
 
 	/**
+	 * Counts captured leads in custom leads table.
+	 *
+	 * @return int
+	 */
+	public static function count_leads() {
+		global $wpdb;
+
+		$table_name = CMLC_Plugin::leads_table_name();
+		$exists     = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table_name ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		if ( $table_name !== $exists ) {
+			return 0;
+		}
+
+		return (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table_name}" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+	}
+
+	/**
+	 * Syncs submission analytics with recorded leads.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public static function sync_submission_analytics() {
+		$settings                          = self::get();
+		$settings['analytics_submissions'] = self::count_leads();
+		update_option( self::OPTION_KEY, $settings );
+
+		return $settings;
+	}
+
+	/**
 	 * Renders settings page.
 	 *
 	 * @return void
@@ -143,7 +185,7 @@ class CMLC_Settings {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'coppermont-lead-capture' ) );
 		}
 
-		$settings = self::get();
+		$settings = self::sync_submission_analytics();
 		?>
 		<div class="wrap">
 			<h1>Coppermont Lead Capture</h1>
