@@ -31,7 +31,13 @@
   };
 
   const postAjax = (action, payload = {}) => {
-    const body = new URLSearchParams({ action, nonce: cfg.nonce, ...payload });
+    const body = new URLSearchParams({
+      action,
+      nonce: cfg.nonce,
+      contextToken: cfg.contextToken || '',
+      pageLocation: cfg.pageLocation || window.location.href,
+      ...payload
+    });
     return fetch(cfg.ajaxUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

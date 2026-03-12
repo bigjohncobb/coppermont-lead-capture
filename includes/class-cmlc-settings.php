@@ -51,6 +51,11 @@ class CMLC_Settings {
 			'schedule_end'               => '',
 			'analytics_impressions'      => 0,
 			'analytics_submissions'      => 0,
+			'analytics_daily_impressions'=> 0,
+			'analytics_daily_submissions'=> 0,
+			'analytics_suspected_bot_traffic' => 0,
+			'analytics_daily_suspected_bot' => 0,
+			'analytics_daily_last_rollover_date' => '',
 		);
 	}
 
@@ -117,6 +122,11 @@ class CMLC_Settings {
 		$output['schedule_end']              = sanitize_text_field( $output['schedule_end'] );
 		$output['analytics_impressions']     = isset( $output['analytics_impressions'] ) ? absint( $output['analytics_impressions'] ) : 0;
 		$output['analytics_submissions']     = isset( $output['analytics_submissions'] ) ? absint( $output['analytics_submissions'] ) : 0;
+		$output['analytics_daily_impressions'] = isset( $output['analytics_daily_impressions'] ) ? absint( $output['analytics_daily_impressions'] ) : 0;
+		$output['analytics_daily_submissions'] = isset( $output['analytics_daily_submissions'] ) ? absint( $output['analytics_daily_submissions'] ) : 0;
+		$output['analytics_suspected_bot_traffic'] = isset( $output['analytics_suspected_bot_traffic'] ) ? absint( $output['analytics_suspected_bot_traffic'] ) : 0;
+		$output['analytics_daily_suspected_bot'] = isset( $output['analytics_daily_suspected_bot'] ) ? absint( $output['analytics_daily_suspected_bot'] ) : 0;
+		$output['analytics_daily_last_rollover_date'] = sanitize_text_field( $output['analytics_daily_last_rollover_date'] );
 
 		return $output;
 	}
@@ -172,9 +182,19 @@ class CMLC_Settings {
 				</table>
 				<?php submit_button(); ?>
 			</form>
+			<?php
+			$daily_counters = get_option( 'cmlc_daily_counters', array() );
+			$daily_counters = is_array( $daily_counters ) ? $daily_counters : array();
+			$today          = gmdate( 'Y-m-d' );
+			$today_counts   = isset( $daily_counters[ $today ] ) && is_array( $daily_counters[ $today ] ) ? $daily_counters[ $today ] : array();
+			?>
 			<h2>Analytics</h2>
-			<p><strong>Infobar Shows:</strong> <?php echo esc_html( (string) $settings['analytics_impressions'] ); ?></p>
-			<p><strong>Email Submissions:</strong> <?php echo esc_html( (string) $settings['analytics_submissions'] ); ?></p>
+			<p><strong>Infobar Shows (lifetime):</strong> <?php echo esc_html( (string) $settings['analytics_impressions'] ); ?></p>
+			<p><strong>Infobar Shows (today):</strong> <?php echo esc_html( (string) absint( $today_counts['impressions'] ?? 0 ) ); ?></p>
+			<p><strong>Email Submissions (lifetime):</strong> <?php echo esc_html( (string) $settings['analytics_submissions'] ); ?></p>
+			<p><strong>Email Submissions (today):</strong> <?php echo esc_html( (string) absint( $today_counts['submissions'] ?? 0 ) ); ?></p>
+			<p><strong>Suspected Bot Traffic (lifetime):</strong> <?php echo esc_html( (string) $settings['analytics_suspected_bot_traffic'] ); ?></p>
+			<p><strong>Suspected Bot Traffic (today):</strong> <?php echo esc_html( (string) absint( $today_counts['suspected_bot'] ?? 0 ) ); ?></p>
 		</div>
 		<?php
 	}

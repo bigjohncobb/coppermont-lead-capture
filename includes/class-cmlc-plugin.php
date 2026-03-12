@@ -10,6 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 require_once CMLC_PATH . 'includes/class-cmlc-settings.php';
 require_once CMLC_PATH . 'includes/class-cmlc-shortcodes.php';
 require_once CMLC_PATH . 'includes/class-cmlc-renderer.php';
+require_once CMLC_PATH . 'includes/class-cmlc-security.php';
 require_once CMLC_PATH . 'includes/class-cmlc-ajax.php';
 
 class CMLC_Plugin {
