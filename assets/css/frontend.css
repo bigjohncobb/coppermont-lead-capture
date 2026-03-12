@@ -1,7 +1,8 @@
 .cmlc-infobar {
   position: fixed;
-  left: 16px;
-  right: 16px;
+  left: 50%;
+  width: min(calc(100vw - 32px), var(--cmlc-width, 100%));
+  max-width: 1200px;
   bottom: 16px;
   z-index: 99999;
   display: grid;
@@ -11,16 +12,16 @@
   padding: 16px;
   border-radius: 12px;
   background: var(--cmlc-bg, #1f2937);
+  opacity: calc(var(--cmlc-opacity, 1) * 0);
   color: var(--cmlc-text, #fff);
-  transform: translateY(130%);
-  opacity: 0;
+  transform: translate(-50%, 130%);
   transition: transform .35s ease, opacity .35s ease;
   box-shadow: 0 10px 30px rgba(0,0,0,.2);
 }
 
 .cmlc-infobar.is-visible {
-  transform: translateY(0);
-  opacity: 1;
+  transform: translate(-50%, 0);
+  opacity: var(--cmlc-opacity, 1);
 }
 
 .cmlc-close {
@@ -74,8 +75,7 @@
 
 @media (max-width: 768px) {
   .cmlc-infobar {
-    left: 8px;
-    right: 8px;
+    width: calc(100vw - 16px);
     bottom: 8px;
     grid-template-columns: 1fr;
   }

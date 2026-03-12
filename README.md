@@ -16,23 +16,25 @@ Coppermont Lead Capture is a lightweight WordPress plugin for lead generation us
 - Repetition control:
   - Max views per visitor.
   - Cooldown after dismiss.
+- Multi-campaign architecture via the `cmlc_campaign` custom post type.
+- Conflict resolution for overlapping campaigns using campaign priority.
 - Analytics:
-  - Impression count (times shown).
-  - Submission count.
+  - Impression count (times shown) per campaign.
+  - Submission count per campaign.
 - Shortcode support:
-  - `[coppermont_infobar]`
+  - `[coppermont_infobar id="123"]`
 
 ## Installation
 
 1. Upload the plugin folder to `wp-content/plugins/coppermont-lead-capture`.
 2. Activate **Coppermont Lead Capture** from **Plugins**.
-3. Configure options in **Settings > Lead Capture**.
+3. Create and configure campaigns in **Infobar Campaigns**.
 
 ## Shortcode
 
 ```text
-[coppermont_infobar]
-[coppermont_infobar headline="Get updates" body="Join our list" button="Subscribe"]
+[coppermont_infobar id="123"]
+[coppermont_infobar id="123" headline="Get updates" body="Join our list" button="Subscribe"]
 ```
 
 ## Security Notes

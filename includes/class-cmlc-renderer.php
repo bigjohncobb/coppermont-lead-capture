@@ -9,6 +9,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class CMLC_Renderer {
 	/**
+	 * Active campaign for current request.
+	 *
+	 * @var array<string,mixed>|null
+	 */
+	private $active_campaign = null;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
@@ -22,9 +29,8 @@ class CMLC_Renderer {
 	 * @return void
 	 */
 	public function enqueue() {
-		$settings = CMLC_Settings::get();
-
-		if ( empty( $settings['enabled'] ) || ! $this->is_eligible_page( $settings ) ) {
+		$campaign = $this->get_active_campaign();
+		if ( ! $campaign ) {
 			return;
 		}
 
@@ -35,14 +41,15 @@ class CMLC_Renderer {
 			'cmlc-frontend',
 			'cmlcConfig',
 			array(
-				'ajaxUrl'               => admin_url( 'admin-ajax.php' ),
-				'nonce'                 => wp_create_nonce( 'cmlc_nonce' ),
-				'scrollPercent'         => (int) $settings['scroll_trigger_percent'],
-				'timeDelay'             => (int) $settings['time_delay_seconds'],
-				'cooldownHours'         => (int) $settings['repetition_cooldown_hours'],
-				'maxViews'              => (int) $settings['max_views'],
-				'enableExitIntent'      => ! empty( $settings['enable_exit_intent'] ),
-				'enableMobile'          => ! empty( $settings['enable_mobile'] ),
+				'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
+				'nonce'            => wp_create_nonce( 'cmlc_nonce' ),
+				'campaignId'       => (int) $campaign['id'],
+				'scrollPercent'    => (int) $campaign['scroll_trigger_percent'],
+				'timeDelay'        => (int) $campaign['time_delay_seconds'],
+				'cooldownHours'    => (int) $campaign['repetition_cooldown_hours'],
+				'maxViews'         => (int) $campaign['max_views'],
+				'enableExitIntent' => ! empty( $campaign['enable_exit_intent'] ),
+				'enableMobile'     => ! empty( $campaign['enable_mobile'] ),
 			)
 		);
 	}
@@ -53,30 +60,56 @@ class CMLC_Renderer {
 	 * @return void
 	 */
 	public function render_infobar() {
-		$settings = CMLC_Settings::get();
-
-		if ( empty( $settings['enabled'] ) || ! $this->is_eligible_page( $settings ) ) {
+		$campaign = $this->get_active_campaign();
+		if ( ! $campaign ) {
 			return;
 		}
 
 		$style = sprintf(
-			'--cmlc-bg:%1$s;--cmlc-text:%2$s;--cmlc-btn:%3$s;--cmlc-btn-text:%4$s;',
-			esc_attr( $settings['bg_color'] ),
-			esc_attr( $settings['text_color'] ),
-			esc_attr( $settings['button_color'] ),
-			esc_attr( $settings['button_text_color'] )
+			'--cmlc-bg:%1$s;--cmlc-text:%2$s;--cmlc-btn:%3$s;--cmlc-btn-text:%4$s;--cmlc-width:%5$s%%;--cmlc-opacity:%6$s;',
+			esc_attr( $campaign['bg_color'] ),
+			esc_attr( $campaign['text_color'] ),
+			esc_attr( $campaign['button_color'] ),
+			esc_attr( $campaign['button_text_color'] ),
+			esc_attr( (string) $campaign['bar_width'] ),
+			esc_attr( (string) ( (float) $campaign['bar_opacity'] / 100 ) )
 		);
 
+		$settings = $campaign;
 		include CMLC_PATH . 'templates/infobar.php';
+	}
+
+	/**
+	 * Gets highest-priority active campaign.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	public function get_active_campaign() {
+		if ( null !== $this->active_campaign ) {
+			return $this->active_campaign;
+		}
+
+		foreach ( CMLC_Campaigns::get_all_campaigns() as $campaign ) {
+			if ( empty( $campaign['enabled'] ) ) {
+				continue;
+			}
+			if ( ! $this->is_eligible_page( $campaign ) ) {
+				continue;
+			}
+			$this->active_campaign = $campaign;
+			return $this->active_campaign;
+		}
+
+		return null;
 	}
 
 	/**
 	 * Evaluates page eligibility, schedule and referrer.
 	 *
-	 * @param array<string,mixed> $settings Plugin settings.
+	 * @param array<string,mixed> $settings Campaign settings.
 	 * @return bool
 	 */
-	private function is_eligible_page( $settings ) {
+	public function is_eligible_page( $settings ) {
 		if ( is_admin() ) {
 			return false;
 		}
@@ -106,7 +139,7 @@ class CMLC_Renderer {
 	/**
 	 * Checks scheduler window.
 	 *
-	 * @param array<string,mixed> $settings Plugin settings.
+	 * @param array<string,mixed> $settings Campaign settings.
 	 * @return bool
 	 */
 	private function is_within_schedule( $settings ) {
@@ -133,7 +166,7 @@ class CMLC_Renderer {
 	/**
 	 * Applies referral detection rules.
 	 *
-	 * @param array<string,mixed> $settings Plugin settings.
+	 * @param array<string,mixed> $settings Campaign settings.
 	 * @return bool
 	 */
 	private function passes_referrer_rules( $settings ) {

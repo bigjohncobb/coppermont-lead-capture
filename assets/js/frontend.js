@@ -3,12 +3,13 @@
   const cfg = window.cmlcConfig || {};
   if (!bar && !document.querySelector('[data-cmlc-form]')) return;
 
-  const storageKey = 'cmlcState';
+  const campaignId = Number(cfg.campaignId || (bar && bar.dataset.campaignId) || 0);
+  const storageKey = `cmlcState:${campaignId || 'default'}`;
   const form = document.querySelector('[data-cmlc-form]');
   const closeBtn = bar ? bar.querySelector('[data-cmlc-close]') : null;
   const status = bar ? bar.querySelector('[data-cmlc-status]') : null;
 
-  if (!cfg.ajaxUrl || !cfg.nonce) return;
+  if (!cfg.ajaxUrl || !cfg.nonce || !campaignId) return;
 
   const loadState = () => {
     try {
@@ -31,7 +32,7 @@
   };
 
   const postAjax = (action, payload = {}) => {
-    const body = new URLSearchParams({ action, nonce: cfg.nonce, ...payload });
+    const body = new URLSearchParams({ action, nonce: cfg.nonce, campaign_id: String(campaignId), ...payload });
     return fetch(cfg.ajaxUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
