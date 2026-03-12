@@ -51,6 +51,10 @@ class CMLC_Settings {
 			'schedule_end'               => '',
 			'analytics_impressions'      => 0,
 			'analytics_submissions'      => 0,
+			'analytics_suspected_bots'   => 0,
+			'analytics_daily_impressions' => array(),
+			'analytics_daily_submissions' => array(),
+			'analytics_daily_suspected_bots' => array(),
 		);
 	}
 
@@ -94,7 +98,9 @@ class CMLC_Settings {
 	 */
 	public function sanitize( $input ) {
 		$defaults = self::defaults();
-		$output   = wp_parse_args( is_array( $input ) ? $input : array(), $defaults );
+		$current  = get_option( self::OPTION_KEY, array() );
+		$input    = is_array( $input ) ? $input : array();
+		$output   = wp_parse_args( $input, $defaults );
 
 		$output['enabled']                   = empty( $output['enabled'] ) ? 0 : 1;
 		$output['headline']                  = sanitize_text_field( $output['headline'] );
@@ -117,8 +123,49 @@ class CMLC_Settings {
 		$output['schedule_end']              = sanitize_text_field( $output['schedule_end'] );
 		$output['analytics_impressions']     = isset( $output['analytics_impressions'] ) ? absint( $output['analytics_impressions'] ) : 0;
 		$output['analytics_submissions']     = isset( $output['analytics_submissions'] ) ? absint( $output['analytics_submissions'] ) : 0;
+		$output['analytics_suspected_bots']  = isset( $output['analytics_suspected_bots'] ) ? absint( $output['analytics_suspected_bots'] ) : 0;
+
+		if ( ! isset( $input['analytics_impressions'] ) && is_array( $current ) && isset( $current['analytics_impressions'] ) ) {
+			$output['analytics_impressions'] = absint( $current['analytics_impressions'] );
+		}
+
+		if ( ! isset( $input['analytics_submissions'] ) && is_array( $current ) && isset( $current['analytics_submissions'] ) ) {
+			$output['analytics_submissions'] = absint( $current['analytics_submissions'] );
+		}
+
+		if ( ! isset( $input['analytics_suspected_bots'] ) && is_array( $current ) && isset( $current['analytics_suspected_bots'] ) ) {
+			$output['analytics_suspected_bots'] = absint( $current['analytics_suspected_bots'] );
+		}
+
+		$output['analytics_daily_impressions']    = $this->sanitize_daily_metrics( isset( $current['analytics_daily_impressions'] ) ? $current['analytics_daily_impressions'] : array() );
+		$output['analytics_daily_submissions']    = $this->sanitize_daily_metrics( isset( $current['analytics_daily_submissions'] ) ? $current['analytics_daily_submissions'] : array() );
+		$output['analytics_daily_suspected_bots'] = $this->sanitize_daily_metrics( isset( $current['analytics_daily_suspected_bots'] ) ? $current['analytics_daily_suspected_bots'] : array() );
 
 		return $output;
+	}
+
+	/**
+	 * Sanitizes daily analytics metric arrays.
+	 *
+	 * @param mixed $metrics Raw metrics.
+	 * @return array<string,int>
+	 */
+	private function sanitize_daily_metrics( $metrics ) {
+		if ( ! is_array( $metrics ) ) {
+			return array();
+		}
+
+		$sanitized = array();
+		foreach ( $metrics as $date => $value ) {
+			$clean_date = preg_replace( '/[^0-9\-]/', '', (string) $date );
+			if ( empty( $clean_date ) ) {
+				continue;
+			}
+
+			$sanitized[ $clean_date ] = absint( $value );
+		}
+
+		return $sanitized;
 	}
 
 	/**
@@ -175,6 +222,47 @@ class CMLC_Settings {
 			<h2>Analytics</h2>
 			<p><strong>Infobar Shows:</strong> <?php echo esc_html( (string) $settings['analytics_impressions'] ); ?></p>
 			<p><strong>Email Submissions:</strong> <?php echo esc_html( (string) $settings['analytics_submissions'] ); ?></p>
+			<p><strong>Suspected Bot Traffic:</strong> <?php echo esc_html( (string) $settings['analytics_suspected_bots'] ); ?></p>
+			<h3>Daily Metrics (UTC)</h3>
+			<table class="widefat striped" style="max-width:700px;">
+				<thead>
+					<tr>
+						<th>Date</th>
+						<th>Impressions</th>
+						<th>Submissions</th>
+						<th>Suspected Bots</th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php
+					$daily_rows = array_unique(
+						array_merge(
+							array_keys( is_array( $settings['analytics_daily_impressions'] ) ? $settings['analytics_daily_impressions'] : array() ),
+							array_keys( is_array( $settings['analytics_daily_submissions'] ) ? $settings['analytics_daily_submissions'] : array() ),
+							array_keys( is_array( $settings['analytics_daily_suspected_bots'] ) ? $settings['analytics_daily_suspected_bots'] : array() )
+						)
+					);
+					rsort( $daily_rows );
+
+					if ( empty( $daily_rows ) ) :
+						?>
+						<tr><td colspan="4">No daily metrics yet.</td></tr>
+						<?php
+					else :
+						foreach ( $daily_rows as $date ) :
+							?>
+							<tr>
+								<td><?php echo esc_html( (string) $date ); ?></td>
+								<td><?php echo esc_html( (string) absint( isset( $settings['analytics_daily_impressions'][ $date ] ) ? $settings['analytics_daily_impressions'][ $date ] : 0 ) ); ?></td>
+								<td><?php echo esc_html( (string) absint( isset( $settings['analytics_daily_submissions'][ $date ] ) ? $settings['analytics_daily_submissions'][ $date ] : 0 ) ); ?></td>
+								<td><?php echo esc_html( (string) absint( isset( $settings['analytics_daily_suspected_bots'][ $date ] ) ? $settings['analytics_daily_suspected_bots'][ $date ] : 0 ) ); ?></td>
+							</tr>
+							<?php
+						endforeach;
+					endif;
+					?>
+				</tbody>
+			</table>
 		</div>
 		<?php
 	}

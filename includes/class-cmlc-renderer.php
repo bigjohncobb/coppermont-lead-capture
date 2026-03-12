@@ -28,6 +28,9 @@ class CMLC_Renderer {
 			return;
 		}
 
+		$context_payload = $this->build_context_payload( $settings );
+		$context_token   = $this->sign_context_payload( $context_payload );
+
 		wp_enqueue_style( 'cmlc-frontend', CMLC_URL . 'assets/css/frontend.css', array(), CMLC_VERSION );
 		wp_enqueue_script( 'cmlc-frontend', CMLC_URL . 'assets/js/frontend.js', array(), CMLC_VERSION, true );
 
@@ -37,6 +40,7 @@ class CMLC_Renderer {
 			array(
 				'ajaxUrl'               => admin_url( 'admin-ajax.php' ),
 				'nonce'                 => wp_create_nonce( 'cmlc_nonce' ),
+				'contextToken'          => $context_token,
 				'scrollPercent'         => (int) $settings['scroll_trigger_percent'],
 				'timeDelay'             => (int) $settings['time_delay_seconds'],
 				'cooldownHours'         => (int) $settings['repetition_cooldown_hours'],
@@ -45,6 +49,46 @@ class CMLC_Renderer {
 				'enableMobile'          => ! empty( $settings['enable_mobile'] ),
 			)
 		);
+	}
+
+	/**
+	 * Builds signed context payload used by AJAX endpoints.
+	 *
+	 * @param array<string,mixed> $settings Plugin settings.
+	 * @return array<string,mixed>
+	 */
+	private function build_context_payload( $settings ) {
+		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_unslash( $_SERVER['REQUEST_URI'] ) : '/';
+
+		$campaign_fingerprint = implode(
+			'|',
+			array(
+				(string) $settings['headline'],
+				(string) $settings['body'],
+				(string) $settings['button_text'],
+				(string) $settings['page_target_mode'],
+				(string) $settings['page_ids'],
+			)
+		);
+
+		return array(
+			'campaign_hash' => hash( 'sha256', $campaign_fingerprint ),
+			'page_hash'     => hash( 'sha256', $request_uri ),
+			'expires_at'    => time() + 15 * MINUTE_IN_SECONDS,
+		);
+	}
+
+	/**
+	 * Signs context payload.
+	 *
+	 * @param array<string,mixed> $payload Context payload.
+	 * @return string
+	 */
+	private function sign_context_payload( $payload ) {
+		$json      = wp_json_encode( $payload );
+		$signature = hash_hmac( 'sha256', (string) $json, wp_salt( 'nonce' ) );
+
+		return base64_encode( (string) $json ) . '.' . $signature;
 	}
 
 	/**
