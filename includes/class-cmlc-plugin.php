@@ -11,6 +11,8 @@ require_once CMLC_PATH . 'includes/class-cmlc-settings.php';
 require_once CMLC_PATH . 'includes/class-cmlc-shortcodes.php';
 require_once CMLC_PATH . 'includes/class-cmlc-renderer.php';
 require_once CMLC_PATH . 'includes/class-cmlc-ajax.php';
+require_once CMLC_PATH . 'includes/class-cmlc-admin-security.php';
+require_once CMLC_PATH . 'includes/class-cmlc-admin-actions.php';
 
 class CMLC_Plugin {
 	/**
@@ -70,5 +72,6 @@ class CMLC_Plugin {
 		new CMLC_Shortcodes();
 		new CMLC_Renderer();
 		new CMLC_Ajax();
+		new CMLC_Admin_Actions();
 	}
 }

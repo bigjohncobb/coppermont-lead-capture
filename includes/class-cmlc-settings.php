@@ -38,6 +38,9 @@ class CMLC_Settings {
 			'text_color'                 => '#ffffff',
 			'button_color'               => '#f59e0b',
 			'button_text_color'          => '#111827',
+			'bar_width'                  => '960px',
+			'bar_height'                 => '96px',
+			'bar_opacity'                => 0.95,
 			'scroll_trigger_percent'     => 40,
 			'time_delay_seconds'         => 8,
 			'repetition_cooldown_hours'  => 24,
@@ -191,6 +194,25 @@ class CMLC_Settings {
 		$settings['text_color']       = isset( $raw['text_color'] ) ? ( sanitize_hex_color( $raw['text_color'] ) ?: $defaults['text_color'] ) : $settings['text_color'];
 		$settings['button_color']     = isset( $raw['button_color'] ) ? ( sanitize_hex_color( $raw['button_color'] ) ?: $defaults['button_color'] ) : $settings['button_color'];
 		$settings['button_text_color'] = isset( $raw['button_text_color'] ) ? ( sanitize_hex_color( $raw['button_text_color'] ) ?: $defaults['button_text_color'] ) : $settings['button_text_color'];
+		$settings['bar_width']        = isset( $raw['bar_width'] ) ? $this->sanitize_design_dimension(
+			$raw['bar_width'],
+			$defaults['bar_width'],
+			array(
+				'px' => array( 280, 1400 ),
+				'%'  => array( 35, 100 ),
+				'vw' => array( 35, 100 ),
+			)
+		) : $settings['bar_width'];
+		$settings['bar_height']       = isset( $raw['bar_height'] ) ? $this->sanitize_design_dimension(
+			$raw['bar_height'],
+			$defaults['bar_height'],
+			array(
+				'px' => array( 56, 360 ),
+				'%'  => array( 8, 100 ),
+				'vw' => array( 8, 100 ),
+			)
+		) : $settings['bar_height'];
+		$settings['bar_opacity']      = isset( $raw['bar_opacity'] ) ? $this->sanitize_opacity( $raw['bar_opacity'], (float) $defaults['bar_opacity'] ) : $settings['bar_opacity'];
 
 		return $settings;
 	}
@@ -247,6 +269,57 @@ class CMLC_Settings {
 	}
 
 	/**
+	 * Sanitizes a design dimension that supports px, %, and vw units.
+	 *
+	 * @param mixed                $value  Raw value.
+	 * @param string               $default Default fallback.
+	 * @param array<string,array> $limits Value boundaries keyed by unit.
+	 * @return string
+	 */
+	private function sanitize_design_dimension( $value, $default, $limits ) {
+		$raw = strtolower( trim( (string) $value ) );
+
+		if ( ! preg_match( '/^(\d+(?:\.\d+)?)(px|%|vw)$/', $raw, $matches ) ) {
+			return $default;
+		}
+
+		$number = (float) $matches[1];
+		$unit   = $matches[2];
+
+		if ( ! isset( $limits[ $unit ] ) || ! is_array( $limits[ $unit ] ) ) {
+			return $default;
+		}
+
+		$min = (float) $limits[ $unit ][0];
+		$max = (float) $limits[ $unit ][1];
+		if ( $min > $max ) {
+			return $default;
+		}
+
+		$number = max( $min, min( $max, $number ) );
+		$number = ( floor( $number ) === $number ) ? (string) (int) $number : rtrim( rtrim( sprintf( '%.2f', $number ), '0' ), '.' );
+
+		return $number . $unit;
+	}
+
+	/**
+	 * Sanitizes opacity between 0 and 1.
+	 *
+	 * @param mixed $value Raw value.
+	 * @param float $default Default fallback.
+	 * @return float
+	 */
+	private function sanitize_opacity( $value, $default ) {
+		if ( ! is_numeric( $value ) ) {
+			return $default;
+		}
+
+		$opacity = (float) $value;
+
+		return max( 0, min( 1, $opacity ) );
+	}
+
+	/**
 	 * Retrieves settings merged with defaults.
 	 *
 	 * @return array<string,mixed>
@@ -264,7 +337,7 @@ class CMLC_Settings {
 	 * @return void
 	 */
 	public function render_page() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! CMLC_Admin_Security::current_user_can_manage_options() ) {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'coppermont-lead-capture' ) );
 		}
 
@@ -330,6 +403,9 @@ class CMLC_Settings {
 							<tr><th scope="row">Text Color</th><td><input type="color" name="cmlc_settings[text_color]" value="<?php echo esc_attr( $settings['text_color'] ); ?>"></td></tr>
 							<tr><th scope="row">Button Color</th><td><input type="color" name="cmlc_settings[button_color]" value="<?php echo esc_attr( $settings['button_color'] ); ?>"></td></tr>
 							<tr><th scope="row">Button Text Color</th><td><input type="color" name="cmlc_settings[button_text_color]" value="<?php echo esc_attr( $settings['button_text_color'] ); ?>"></td></tr>
+							<tr><th scope="row">Infobar Width</th><td><input name="cmlc_settings[bar_width]" value="<?php echo esc_attr( $settings['bar_width'] ); ?>"><p class="description">Use <code>px</code>, <code>%</code>, or <code>vw</code> (for example: <code>960px</code>, <code>90%</code>, <code>92vw</code>). On smaller screens, width is automatically constrained so the bar remains usable.</p></td></tr>
+							<tr><th scope="row">Infobar Min Height</th><td><input name="cmlc_settings[bar_height]" value="<?php echo esc_attr( $settings['bar_height'] ); ?>"><p class="description">Supports <code>px</code>, <code>%</code>, or <code>vw</code>. This controls minimum height only, so content can still expand naturally on mobile.</p></td></tr>
+							<tr><th scope="row">Infobar Background Opacity</th><td><input type="number" min="0" max="1" step="0.01" name="cmlc_settings[bar_opacity]" value="<?php echo esc_attr( (string) $settings['bar_opacity'] ); ?>"><p class="description">Set from <code>0</code> (fully transparent) to <code>1</code> (fully opaque). Works with your selected background color.</p></td></tr>
 						<?php elseif ( 'triggers' === $active_tab ) : ?>
 							<tr><th scope="row">Scroll Trigger %</th><td><input type="number" min="0" max="100" name="cmlc_settings[scroll_trigger_percent]" value="<?php echo esc_attr( $settings['scroll_trigger_percent'] ); ?>"></td></tr>
 							<tr><th scope="row">Delay Seconds</th><td><input type="number" min="0" name="cmlc_settings[time_delay_seconds]" value="<?php echo esc_attr( $settings['time_delay_seconds'] ); ?>"></td></tr>
