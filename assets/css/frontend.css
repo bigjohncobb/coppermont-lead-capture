@@ -14,13 +14,16 @@
   color: var(--cmlc-text, #fff);
   transform: translateY(130%);
   opacity: 0;
+  width: var(--cmlc-width, auto);
+  max-width: 100%;
+  min-height: var(--cmlc-height, auto);
   transition: transform .35s ease, opacity .35s ease;
   box-shadow: 0 10px 30px rgba(0,0,0,.2);
 }
 
 .cmlc-infobar.is-visible {
   transform: translateY(0);
-  opacity: 1;
+  opacity: var(--cmlc-opacity, 1);
 }
 
 .cmlc-close {

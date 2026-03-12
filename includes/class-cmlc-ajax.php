@@ -29,12 +29,20 @@ class CMLC_Ajax {
 		}
 
 		check_ajax_referer( 'cmlc_nonce', 'nonce' );
+		$campaign = $this->get_campaign_from_request();
+		if ( empty( $campaign ) ) {
+			wp_send_json_error( array( 'message' => 'Campaign not found.' ), 404 );
+		}
 
-		$settings                          = CMLC_Settings::get();
-		$settings['analytics_impressions'] = absint( $settings['analytics_impressions'] ) + 1;
-		update_option( CMLC_Settings::OPTION_KEY, $settings );
+		$campaign['analytics_impressions'] = absint( $campaign['analytics_impressions'] ) + 1;
+		CMLC_Campaigns::update_campaign( (int) $campaign['campaign_id'], $campaign );
 
-		wp_send_json_success( array( 'impressions' => $settings['analytics_impressions'] ) );
+		wp_send_json_success(
+			array(
+				'campaign_id'  => (int) $campaign['campaign_id'],
+				'impressions'  => $campaign['analytics_impressions'],
+			)
+		);
 	}
 
 	/**
@@ -54,15 +62,35 @@ class CMLC_Ajax {
 			wp_send_json_error( array( 'message' => 'Please provide a valid email.' ), 400 );
 		}
 
-		$settings                          = CMLC_Settings::get();
-		$settings['analytics_submissions'] = absint( $settings['analytics_submissions'] ) + 1;
-		update_option( CMLC_Settings::OPTION_KEY, $settings );
+		$campaign = $this->get_campaign_from_request();
+		if ( empty( $campaign ) ) {
+			wp_send_json_error( array( 'message' => 'Campaign not found.' ), 404 );
+		}
 
-		/**
-		 * Fires after lead form submission for CRM integrations.
-		 */
-		do_action( 'cmlc_lead_submitted', $email, $settings );
+		$campaign['analytics_submissions'] = absint( $campaign['analytics_submissions'] ) + 1;
+		CMLC_Campaigns::update_campaign( (int) $campaign['campaign_id'], $campaign );
 
-		wp_send_json_success( array( 'message' => 'Thanks! You are subscribed.' ) );
+		do_action( 'cmlc_lead_submitted', $email, $campaign );
+
+		wp_send_json_success(
+			array(
+				'campaign_id' => (int) $campaign['campaign_id'],
+				'message'     => 'Thanks! You are subscribed.',
+			)
+		);
+	}
+
+	/**
+	 * Resolves campaign from request payload.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function get_campaign_from_request() {
+		$campaign_id = isset( $_POST['campaign_id'] ) ? absint( wp_unslash( $_POST['campaign_id'] ) ) : 0;
+		if ( $campaign_id ) {
+			return CMLC_Campaigns::get_campaign( $campaign_id );
+		}
+
+		return CMLC_Campaigns::get_active_campaign();
 	}
 }

@@ -22,46 +22,48 @@ class CMLC_Shortcodes {
 	 * @return string
 	 */
 	public function render_infobar_shortcode( $atts ) {
-		$settings = CMLC_Settings::get();
-
-		wp_enqueue_style( 'cmlc-frontend', CMLC_URL . 'assets/css/frontend.css', array(), CMLC_VERSION );
-		wp_enqueue_script( 'cmlc-frontend', CMLC_URL . 'assets/js/frontend.js', array(), CMLC_VERSION, true );
-		wp_localize_script(
-			'cmlc-frontend',
-			'cmlcConfig',
+		$atts = shortcode_atts(
 			array(
-				'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
-				'nonce'            => wp_create_nonce( 'cmlc_nonce' ),
-				'scrollPercent'    => (int) $settings['scroll_trigger_percent'],
-				'timeDelay'        => (int) $settings['time_delay_seconds'],
-				'cooldownHours'    => (int) $settings['repetition_cooldown_hours'],
-				'maxViews'         => (int) $settings['max_views'],
-				'enableExitIntent' => ! empty( $settings['enable_exit_intent'] ),
-				'enableMobile'     => ! empty( $settings['enable_mobile'] ),
-			)
-		);
-		$atts     = shortcode_atts(
-			array(
-				'headline' => $settings['headline'],
-				'body'     => $settings['body'],
-				'button'   => $settings['button_text'],
+				'id'       => 0,
+				'headline' => '',
+				'body'     => '',
+				'button'   => '',
 			),
 			$atts,
 			'coppermont_infobar'
 		);
 
-		ob_start();
-		?>
-		<div class="cmlc-shortcode-wrap">
-			<div class="cmlc-shortcode-headline"><?php echo esc_html( $atts['headline'] ); ?></div>
-			<div class="cmlc-shortcode-body"><?php echo esc_html( $atts['body'] ); ?></div>
-			<form class="cmlc-shortcode-form" data-cmlc-form>
-				<input type="email" name="email" required placeholder="Email address">
-				<button type="submit"><?php echo esc_html( $atts['button'] ); ?></button>
-			</form>
-		</div>
-		<?php
+		$campaign = ! empty( $atts['id'] ) ? CMLC_Campaigns::get_campaign( absint( $atts['id'] ) ) : CMLC_Campaigns::get_active_campaign();
+		if ( empty( $campaign ) ) {
+			return '';
+		}
 
+		CMLC_Renderer::enqueue_assets( $campaign );
+
+		$settings = $campaign;
+		if ( ! empty( $atts['headline'] ) ) {
+			$settings['headline'] = sanitize_text_field( $atts['headline'] );
+		}
+		if ( ! empty( $atts['body'] ) ) {
+			$settings['body'] = sanitize_text_field( $atts['body'] );
+		}
+		if ( ! empty( $atts['button'] ) ) {
+			$settings['button_text'] = sanitize_text_field( $atts['button'] );
+		}
+
+		$style = sprintf(
+			'--cmlc-bg:%1$s;--cmlc-text:%2$s;--cmlc-btn:%3$s;--cmlc-btn-text:%4$s;--cmlc-opacity:%5$s;--cmlc-width:%6$s;--cmlc-height:%7$s;',
+			esc_attr( $settings['bg_color'] ),
+			esc_attr( $settings['text_color'] ),
+			esc_attr( $settings['button_color'] ),
+			esc_attr( $settings['button_text_color'] ),
+			esc_attr( (string) $settings['opacity'] ),
+			esc_attr( (string) $settings['dimensions_width'] ),
+			esc_attr( (string) $settings['dimensions_height'] )
+		);
+
+		ob_start();
+		include CMLC_PATH . 'templates/infobar.php';
 		return (string) ob_get_clean();
 	}
 }

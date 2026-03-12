@@ -6,7 +6,7 @@
  * @var string              $style
  */
 ?>
-<div class="cmlc-infobar" data-cmlc-infobar style="<?php echo esc_attr( $style ); ?>" aria-hidden="true">
+<div class="cmlc-infobar" data-cmlc-infobar data-campaign-id="<?php echo esc_attr( (string) $settings['campaign_id'] ); ?>" style="<?php echo esc_attr( $style ); ?>" aria-hidden="true">
 	<button type="button" class="cmlc-close" data-cmlc-close aria-label="Close infobar">×</button>
 	<div class="cmlc-content">
 		<h3 class="cmlc-headline"><?php echo esc_html( $settings['headline'] ); ?></h3>

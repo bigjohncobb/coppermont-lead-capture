@@ -17,17 +17,26 @@ class CMLC_Renderer {
 	}
 
 	/**
-	 * Enqueues assets and settings.
+	 * Enqueues assets and campaign settings.
 	 *
 	 * @return void
 	 */
 	public function enqueue() {
-		$settings = CMLC_Settings::get();
-
-		if ( empty( $settings['enabled'] ) || ! $this->is_eligible_page( $settings ) ) {
+		$campaign = CMLC_Campaigns::get_active_campaign();
+		if ( empty( $campaign ) ) {
 			return;
 		}
 
+		self::enqueue_assets( $campaign );
+	}
+
+	/**
+	 * Enqueues shared frontend assets.
+	 *
+	 * @param array<string,mixed> $campaign Campaign settings.
+	 * @return void
+	 */
+	public static function enqueue_assets( $campaign ) {
 		wp_enqueue_style( 'cmlc-frontend', CMLC_URL . 'assets/css/frontend.css', array(), CMLC_VERSION );
 		wp_enqueue_script( 'cmlc-frontend', CMLC_URL . 'assets/js/frontend.js', array(), CMLC_VERSION, true );
 
@@ -35,14 +44,15 @@ class CMLC_Renderer {
 			'cmlc-frontend',
 			'cmlcConfig',
 			array(
-				'ajaxUrl'               => admin_url( 'admin-ajax.php' ),
-				'nonce'                 => wp_create_nonce( 'cmlc_nonce' ),
-				'scrollPercent'         => (int) $settings['scroll_trigger_percent'],
-				'timeDelay'             => (int) $settings['time_delay_seconds'],
-				'cooldownHours'         => (int) $settings['repetition_cooldown_hours'],
-				'maxViews'              => (int) $settings['max_views'],
-				'enableExitIntent'      => ! empty( $settings['enable_exit_intent'] ),
-				'enableMobile'          => ! empty( $settings['enable_mobile'] ),
+				'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
+				'nonce'            => wp_create_nonce( 'cmlc_nonce' ),
+				'scrollPercent'    => (int) $campaign['scroll_trigger_percent'],
+				'timeDelay'        => (int) $campaign['time_delay_seconds'],
+				'cooldownHours'    => (int) $campaign['repetition_cooldown_hours'],
+				'maxViews'         => (int) $campaign['max_views'],
+				'enableExitIntent' => ! empty( $campaign['enable_exit_intent'] ),
+				'enableMobile'     => ! empty( $campaign['enable_mobile'] ),
+				'campaignId'       => (int) $campaign['campaign_id'],
 			)
 		);
 	}
@@ -53,18 +63,20 @@ class CMLC_Renderer {
 	 * @return void
 	 */
 	public function render_infobar() {
-		$settings = CMLC_Settings::get();
-
-		if ( empty( $settings['enabled'] ) || ! $this->is_eligible_page( $settings ) ) {
+		$settings = CMLC_Campaigns::get_active_campaign();
+		if ( empty( $settings ) ) {
 			return;
 		}
 
 		$style = sprintf(
-			'--cmlc-bg:%1$s;--cmlc-text:%2$s;--cmlc-btn:%3$s;--cmlc-btn-text:%4$s;',
+			'--cmlc-bg:%1$s;--cmlc-text:%2$s;--cmlc-btn:%3$s;--cmlc-btn-text:%4$s;--cmlc-opacity:%5$s;--cmlc-width:%6$s;--cmlc-height:%7$s;',
 			esc_attr( $settings['bg_color'] ),
 			esc_attr( $settings['text_color'] ),
 			esc_attr( $settings['button_color'] ),
-			esc_attr( $settings['button_text_color'] )
+			esc_attr( $settings['button_text_color'] ),
+			esc_attr( (string) $settings['opacity'] ),
+			esc_attr( (string) $settings['dimensions_width'] ),
+			esc_attr( (string) $settings['dimensions_height'] )
 		);
 
 		include CMLC_PATH . 'templates/infobar.php';
@@ -73,19 +85,19 @@ class CMLC_Renderer {
 	/**
 	 * Evaluates page eligibility, schedule and referrer.
 	 *
-	 * @param array<string,mixed> $settings Plugin settings.
+	 * @param array<string,mixed> $settings Campaign settings.
 	 * @return bool
 	 */
-	private function is_eligible_page( $settings ) {
-		if ( is_admin() ) {
+	public static function is_eligible_page( $settings ) {
+		if ( is_admin() || empty( $settings['enabled'] ) ) {
 			return false;
 		}
 
-		if ( ! $this->is_within_schedule( $settings ) ) {
+		if ( ! self::is_within_schedule( $settings ) ) {
 			return false;
 		}
 
-		if ( ! $this->passes_referrer_rules( $settings ) ) {
+		if ( ! self::passes_referrer_rules( $settings ) ) {
 			return false;
 		}
 
@@ -106,10 +118,10 @@ class CMLC_Renderer {
 	/**
 	 * Checks scheduler window.
 	 *
-	 * @param array<string,mixed> $settings Plugin settings.
+	 * @param array<string,mixed> $settings Campaign settings.
 	 * @return bool
 	 */
-	private function is_within_schedule( $settings ) {
+	private static function is_within_schedule( $settings ) {
 		$timezone = wp_timezone();
 		$now      = new DateTimeImmutable( 'now', $timezone );
 
@@ -133,10 +145,10 @@ class CMLC_Renderer {
 	/**
 	 * Applies referral detection rules.
 	 *
-	 * @param array<string,mixed> $settings Plugin settings.
+	 * @param array<string,mixed> $settings Campaign settings.
 	 * @return bool
 	 */
-	private function passes_referrer_rules( $settings ) {
+	private static function passes_referrer_rules( $settings ) {
 		$allowed = array_filter( array_map( 'trim', explode( ',', (string) $settings['allowed_referrers'] ) ) );
 		if ( empty( $allowed ) ) {
 			return true;

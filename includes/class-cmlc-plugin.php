@@ -7,6 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require_once CMLC_PATH . 'includes/class-cmlc-campaigns.php';
 require_once CMLC_PATH . 'includes/class-cmlc-settings.php';
 require_once CMLC_PATH . 'includes/class-cmlc-shortcodes.php';
 require_once CMLC_PATH . 'includes/class-cmlc-renderer.php';
@@ -47,8 +48,13 @@ class CMLC_Plugin {
 	 */
 	public static function activate() {
 		if ( false === get_option( 'cmlc_settings' ) ) {
-			add_option( 'cmlc_settings', CMLC_Settings::defaults() );
+			add_option( 'cmlc_settings', CMLC_Campaigns::defaults() );
 		}
+
+		$campaigns = new CMLC_Campaigns();
+		$campaigns->register_post_type();
+		$campaigns->maybe_migrate_legacy_settings();
+		flush_rewrite_rules();
 	}
 
 	/**
@@ -58,6 +64,7 @@ class CMLC_Plugin {
 	 */
 	public static function deactivate() {
 		// Intentionally retain settings and analytics.
+		flush_rewrite_rules();
 	}
 
 	/**
@@ -66,6 +73,8 @@ class CMLC_Plugin {
 	 * @return void
 	 */
 	public function bootstrap() {
+		$campaigns = new CMLC_Campaigns();
+		$campaigns->register();
 		new CMLC_Settings();
 		new CMLC_Shortcodes();
 		new CMLC_Renderer();
