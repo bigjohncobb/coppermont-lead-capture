@@ -26,7 +26,7 @@ Coppermont Lead Capture is a lightweight WordPress plugin for lead generation us
 
 1. Upload the plugin folder to `wp-content/plugins/coppermont-lead-capture`.
 2. Activate **Coppermont Lead Capture** from **Plugins**.
-3. Configure options in **Settings > Lead Capture**.
+3. Configure options in **Lead Capture** (top-level admin menu).
 
 ## Shortcode
 
@@ -34,6 +34,16 @@ Coppermont Lead Capture is a lightweight WordPress plugin for lead generation us
 [coppermont_infobar]
 [coppermont_infobar headline="Get updates" body="Join our list" button="Subscribe"]
 ```
+
+
+## Data Management (Admin)
+
+Under **Lead Capture > Data Management**, administrators with `manage_options` can run two nonce-protected cleanup actions:
+
+- **Reset analytics only**: sets impressions and submissions back to zero while preserving all configuration.
+- **Delete all plugin data (irreversible)**: permanently removes all plugin settings and analytics.
+
+The full purge requires typing the confirmation phrase `DELETE ALL DATA` and should only be used for deliberate data removal.
 
 ## Security Notes
 
@@ -44,7 +54,7 @@ Coppermont Lead Capture is a lightweight WordPress plugin for lead generation us
 
 ## Uninstall Behavior
 
-The plugin includes `uninstall.php` and removes the `cmlc_settings` option when uninstalled via WordPress.
+The plugin includes `uninstall.php` and uses the same centralized data manager service as the admin purge tool to remove all plugin data.
 
 ## Extensibility
 

@@ -16,11 +16,21 @@ class CMLC_Settings {
 	const OPTION_KEY = 'cmlc_settings';
 
 	/**
+	 * Data manager service.
+	 *
+	 * @var CMLC_Data_Manager
+	 */
+	private $data_manager;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
+		$this->data_manager = new CMLC_Data_Manager();
 		add_action( 'admin_menu', array( $this, 'add_settings_page' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
+		add_action( 'admin_post_cmlc_reset_analytics', array( $this, 'handle_reset_analytics' ) );
+		add_action( 'admin_post_cmlc_delete_all_data', array( $this, 'handle_delete_all_data' ) );
 	}
 
 	/**
@@ -60,12 +70,14 @@ class CMLC_Settings {
 	 * @return void
 	 */
 	public function add_settings_page() {
-		add_options_page(
+		add_menu_page(
 			'Coppermont Lead Capture',
 			'Lead Capture',
 			'manage_options',
 			'cmlc-settings',
-			array( $this, 'render_page' )
+			array( $this, 'render_page' ),
+			'dashicons-email-alt',
+			56
 		);
 	}
 
@@ -133,6 +145,92 @@ class CMLC_Settings {
 		return wp_parse_args( is_array( $saved ) ? $saved : array(), $defaults );
 	}
 
+
+	/**
+	 * Handles analytics reset requests.
+	 *
+	 * @return void
+	 */
+	public function handle_reset_analytics() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You do not have permission to perform this action.', 'coppermont-lead-capture' ) );
+		}
+
+		check_admin_referer( 'cmlc_reset_analytics_action', 'cmlc_nonce' );
+
+		$result = $this->data_manager->reset_analytics();
+		if ( is_wp_error( $result ) ) {
+			$this->redirect_with_notice( 'error', $result->get_error_message() );
+		}
+
+		$this->redirect_with_notice( 'success', __( 'Analytics counters were reset successfully.', 'coppermont-lead-capture' ) );
+	}
+
+	/**
+	 * Handles full plugin data deletion requests.
+	 *
+	 * @return void
+	 */
+	public function handle_delete_all_data() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You do not have permission to perform this action.', 'coppermont-lead-capture' ) );
+		}
+
+		check_admin_referer( 'cmlc_delete_all_data_action', 'cmlc_nonce' );
+
+		$confirmation = isset( $_POST['cmlc_confirmation_phrase'] ) ? sanitize_text_field( wp_unslash( $_POST['cmlc_confirmation_phrase'] ) ) : '';
+		if ( 'DELETE ALL DATA' !== $confirmation ) {
+			$this->redirect_with_notice( 'error', __( 'Confirmation phrase did not match. No data was deleted.', 'coppermont-lead-capture' ) );
+		}
+
+		$result = $this->data_manager->delete_all_data();
+		if ( is_wp_error( $result ) ) {
+			$this->redirect_with_notice( 'error', $result->get_error_message() );
+		}
+
+		$this->redirect_with_notice( 'success', __( 'All plugin data was deleted.', 'coppermont-lead-capture' ) );
+	}
+
+	/**
+	 * Redirects back to settings page with an admin notice payload.
+	 *
+	 * @param string $type    Notice type.
+	 * @param string $message Notice message.
+	 * @return void
+	 */
+	private function redirect_with_notice( $type, $message ) {
+		$allowed_type = in_array( $type, array( 'success', 'error' ), true ) ? $type : 'error';
+		$url          = add_query_arg(
+			array(
+				'page'        => 'cmlc-settings',
+				'cmlc_notice' => $allowed_type,
+				'cmlc_msg'    => $message,
+			),
+			admin_url( 'admin.php' )
+		);
+
+		wp_safe_redirect( $url );
+		exit;
+	}
+
+	/**
+	 * Renders admin notice for data management actions.
+	 *
+	 * @return void
+	 */
+	private function render_notice() {
+		if ( empty( $_GET['cmlc_notice'] ) || empty( $_GET['cmlc_msg'] ) ) {
+			return;
+		}
+
+		$type    = sanitize_key( wp_unslash( $_GET['cmlc_notice'] ) );
+		$class   = 'success' === $type ? 'notice notice-success' : 'notice notice-error';
+		$message = sanitize_text_field( wp_unslash( $_GET['cmlc_msg'] ) );
+		?>
+		<div class="<?php echo esc_attr( $class ); ?> is-dismissible"><p><?php echo esc_html( $message ); ?></p></div>
+		<?php
+	}
+
 	/**
 	 * Renders settings page.
 	 *
@@ -147,6 +245,7 @@ class CMLC_Settings {
 		?>
 		<div class="wrap">
 			<h1>Coppermont Lead Capture</h1>
+			<?php $this->render_notice(); ?>
 			<form method="post" action="options.php">
 				<?php settings_fields( 'cmlc_settings_group' ); ?>
 				<table class="form-table" role="presentation">
@@ -175,6 +274,25 @@ class CMLC_Settings {
 			<h2>Analytics</h2>
 			<p><strong>Infobar Shows:</strong> <?php echo esc_html( (string) $settings['analytics_impressions'] ); ?></p>
 			<p><strong>Email Submissions:</strong> <?php echo esc_html( (string) $settings['analytics_submissions'] ); ?></p>
+
+			<h2>Data Management</h2>
+			<p class="description">Use these tools for deliberate administrative cleanup. They cannot be undone.</p>
+
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-bottom:1rem;">
+				<input type="hidden" name="action" value="cmlc_reset_analytics">
+				<?php wp_nonce_field( 'cmlc_reset_analytics_action', 'cmlc_nonce' ); ?>
+				<?php submit_button( 'Reset analytics only', 'secondary', 'submit', false ); ?>
+			</form>
+
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="cmlc_delete_all_data">
+				<?php wp_nonce_field( 'cmlc_delete_all_data_action', 'cmlc_nonce' ); ?>
+				<p><label for="cmlc_confirmation_phrase"><strong>Type DELETE ALL DATA to confirm:</strong></label></p>
+				<input id="cmlc_confirmation_phrase" name="cmlc_confirmation_phrase" class="regular-text" autocomplete="off">
+				<p>
+					<?php submit_button( 'Delete all plugin data (irreversible)', 'delete', 'submit', false ); ?>
+				</p>
+			</form>
 		</div>
 		<?php
 	}
