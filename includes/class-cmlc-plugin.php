@@ -10,6 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 require_once CMLC_PATH . 'includes/class-cmlc-settings.php';
 require_once CMLC_PATH . 'includes/class-cmlc-shortcodes.php';
 require_once CMLC_PATH . 'includes/class-cmlc-renderer.php';
+require_once CMLC_PATH . 'includes/class-cmlc-analytics.php';
 require_once CMLC_PATH . 'includes/class-cmlc-ajax.php';
 
 class CMLC_Plugin {
@@ -49,6 +50,8 @@ class CMLC_Plugin {
 		if ( false === get_option( 'cmlc_settings' ) ) {
 			add_option( 'cmlc_settings', CMLC_Settings::defaults() );
 		}
+
+		CMLC_Analytics::activate();
 	}
 
 	/**
@@ -57,6 +60,7 @@ class CMLC_Plugin {
 	 * @return void
 	 */
 	public static function deactivate() {
+		CMLC_Analytics::deactivate();
 		// Intentionally retain settings and analytics.
 	}
 
@@ -70,5 +74,10 @@ class CMLC_Plugin {
 		new CMLC_Shortcodes();
 		new CMLC_Renderer();
 		new CMLC_Ajax();
+
+		CMLC_Analytics::register_hooks();
+		CMLC_Analytics::maybe_upgrade();
+		CMLC_Analytics::ensure_cleanup_schedule();
+		CMLC_Analytics::maybe_migrate_legacy_counters();
 	}
 }

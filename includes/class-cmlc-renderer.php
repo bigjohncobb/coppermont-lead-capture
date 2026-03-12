@@ -43,6 +43,8 @@ class CMLC_Renderer {
 				'maxViews'              => (int) $settings['max_views'],
 				'enableExitIntent'      => ! empty( $settings['enable_exit_intent'] ),
 				'enableMobile'          => ! empty( $settings['enable_mobile'] ),
+				'pageId'                => get_queried_object_id(),
+				'campaignId'            => (int) apply_filters( 'cmlc_campaign_id', 0 ),
 			)
 		);
 	}

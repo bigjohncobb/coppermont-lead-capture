@@ -51,6 +51,7 @@ class CMLC_Settings {
 			'schedule_end'               => '',
 			'analytics_impressions'      => 0,
 			'analytics_submissions'      => 0,
+			'analytics_retention_days'    => 180,
 		);
 	}
 
@@ -117,6 +118,10 @@ class CMLC_Settings {
 		$output['schedule_end']              = sanitize_text_field( $output['schedule_end'] );
 		$output['analytics_impressions']     = isset( $output['analytics_impressions'] ) ? absint( $output['analytics_impressions'] ) : 0;
 		$output['analytics_submissions']     = isset( $output['analytics_submissions'] ) ? absint( $output['analytics_submissions'] ) : 0;
+		$output['analytics_retention_days']   = isset( $output['analytics_retention_days'] ) ? absint( $output['analytics_retention_days'] ) : 180;
+		if ( ! in_array( $output['analytics_retention_days'], array( 90, 180, 365 ), true ) ) {
+			$output['analytics_retention_days'] = 180;
+		}
 
 		return $output;
 	}
@@ -169,12 +174,20 @@ class CMLC_Settings {
 					<tr><th scope="row">Page IDs</th><td><input class="regular-text" name="cmlc_settings[page_ids]" value="<?php echo esc_attr( $settings['page_ids'] ); ?>"><p class="description">Comma-separated post/page IDs.</p></td></tr>
 					<tr><th scope="row">Schedule Start</th><td><input type="datetime-local" name="cmlc_settings[schedule_start]" value="<?php echo esc_attr( $settings['schedule_start'] ); ?>"></td></tr>
 					<tr><th scope="row">Schedule End</th><td><input type="datetime-local" name="cmlc_settings[schedule_end]" value="<?php echo esc_attr( $settings['schedule_end'] ); ?>"></td></tr>
+					<tr><th scope="row">Analytics Retention</th><td><select name="cmlc_settings[analytics_retention_days]"><option value="90" <?php selected( 90, (int) $settings['analytics_retention_days'] ); ?>>90 days</option><option value="180" <?php selected( 180, (int) $settings['analytics_retention_days'] ); ?>>180 days</option><option value="365" <?php selected( 365, (int) $settings['analytics_retention_days'] ); ?>>365 days</option></select></td></tr>
 				</table>
 				<?php submit_button(); ?>
 			</form>
+			<?php
+			$analytics        = new CMLC_Analytics();
+			$analytics_totals = $analytics->get_totals();
+			$legacy_impressions = (int) $settings['analytics_impressions'];
+			$legacy_submissions = (int) $settings['analytics_submissions'];
+			?>
 			<h2>Analytics</h2>
-			<p><strong>Infobar Shows:</strong> <?php echo esc_html( (string) $settings['analytics_impressions'] ); ?></p>
-			<p><strong>Email Submissions:</strong> <?php echo esc_html( (string) $settings['analytics_submissions'] ); ?></p>
+			<p><strong>Infobar Shows:</strong> <?php echo esc_html( (string) $analytics_totals['impressions'] ); ?> <em>(legacy: <?php echo esc_html( (string) $legacy_impressions ); ?>)</em></p>
+			<p><strong>Email Submissions:</strong> <?php echo esc_html( (string) $analytics_totals['submissions'] ); ?> <em>(legacy: <?php echo esc_html( (string) $legacy_submissions ); ?>)</em></p>
+			<p><strong>Conversion Rate:</strong> <?php echo esc_html( (string) $analytics_totals['conversion_rate'] ); ?>%</p>
 		</div>
 		<?php
 	}

@@ -49,7 +49,7 @@
     state.views = (state.views || 0) + 1;
     saveState(state);
 
-    postAjax('cmlc_track_impression').catch(() => null);
+    postAjax('cmlc_track_impression', { page_id: cfg.pageId || 0, campaign_id: cfg.campaignId || 0 }).catch(() => null);
   };
 
   const dismiss = () => {
@@ -93,7 +93,7 @@
       event.preventDefault();
       const email = form.querySelector('input[name="email"]').value;
 
-      postAjax('cmlc_submit_email', { email })
+      postAjax('cmlc_submit_email', { email, page_id: cfg.pageId || 0, campaign_id: cfg.campaignId || 0 })
         .then((data) => {
           if (data && data.success) {
             if (status) status.textContent = data.data.message || 'Subscribed';
