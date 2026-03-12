@@ -49,6 +49,7 @@ class CMLC_Settings {
 			'page_ids'                   => '',
 			'schedule_start'             => '',
 			'schedule_end'               => '',
+			'keep_data_on_uninstall'     => 1,
 			'analytics_impressions'      => 0,
 			'analytics_submissions'      => 0,
 		);
@@ -115,6 +116,7 @@ class CMLC_Settings {
 		$output['page_ids']                  = sanitize_text_field( $output['page_ids'] );
 		$output['schedule_start']            = sanitize_text_field( $output['schedule_start'] );
 		$output['schedule_end']              = sanitize_text_field( $output['schedule_end'] );
+		$output['keep_data_on_uninstall']    = empty( $output['keep_data_on_uninstall'] ) ? 0 : 1;
 		$output['analytics_impressions']     = isset( $output['analytics_impressions'] ) ? absint( $output['analytics_impressions'] ) : 0;
 		$output['analytics_submissions']     = isset( $output['analytics_submissions'] ) ? absint( $output['analytics_submissions'] ) : 0;
 
@@ -169,6 +171,19 @@ class CMLC_Settings {
 					<tr><th scope="row">Page IDs</th><td><input class="regular-text" name="cmlc_settings[page_ids]" value="<?php echo esc_attr( $settings['page_ids'] ); ?>"><p class="description">Comma-separated post/page IDs.</p></td></tr>
 					<tr><th scope="row">Schedule Start</th><td><input type="datetime-local" name="cmlc_settings[schedule_start]" value="<?php echo esc_attr( $settings['schedule_start'] ); ?>"></td></tr>
 					<tr><th scope="row">Schedule End</th><td><input type="datetime-local" name="cmlc_settings[schedule_end]" value="<?php echo esc_attr( $settings['schedule_end'] ); ?>"></td></tr>
+				</table>
+
+				<h2>Data &amp; Privacy</h2>
+				<table class="form-table" role="presentation">
+					<tr>
+						<th scope="row">Keep plugin data when uninstalling</th>
+						<td>
+							<label>
+								<input type="checkbox" name="cmlc_settings[keep_data_on_uninstall]" value="1" <?php checked( 1, $settings['keep_data_on_uninstall'] ); ?>>
+								Preserve plugin data if the plugin is deleted.
+							</label>
+						</td>
+					</tr>
 				</table>
 				<?php submit_button(); ?>
 			</form>
