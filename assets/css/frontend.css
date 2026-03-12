@@ -92,3 +92,15 @@
     width: 100%;
   }
 }
+
+.cmlc-honeypot {
+  position: absolute !important;
+  left: -9999px !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.cmlc-form .cf-turnstile,
+.cmlc-shortcode-form .cf-turnstile {
+  margin-top: 4px;
+}

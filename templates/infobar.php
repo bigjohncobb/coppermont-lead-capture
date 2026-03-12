@@ -14,6 +14,11 @@
 	</div>
 	<form class="cmlc-form" data-cmlc-form>
 		<input type="email" name="email" required placeholder="Email address" aria-label="Email address">
+		<input type="text" name="website" value="" tabindex="-1" autocomplete="off" class="cmlc-honeypot" aria-hidden="true">
+		<?php if ( ! empty( $settings['turnstile_enabled'] ) && ! empty( $settings['turnstile_site_key'] ) ) : ?>
+			<div class="cf-turnstile" data-sitekey="<?php echo esc_attr( $settings['turnstile_site_key'] ); ?>" data-action="cmlc_submit"></div>
+			<input type="hidden" name="turnstile_token" value="">
+		<?php endif; ?>
 		<button type="submit"><?php echo esc_html( $settings['button_text'] ); ?></button>
 	</form>
 	<p class="cmlc-status" data-cmlc-status aria-live="polite"></p>

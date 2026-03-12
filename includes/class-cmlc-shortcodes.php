@@ -26,18 +26,27 @@ class CMLC_Shortcodes {
 
 		wp_enqueue_style( 'cmlc-frontend', CMLC_URL . 'assets/css/frontend.css', array(), CMLC_VERSION );
 		wp_enqueue_script( 'cmlc-frontend', CMLC_URL . 'assets/js/frontend.js', array(), CMLC_VERSION, true );
+
+		$turnstile_enabled = ! empty( $settings['turnstile_enabled'] ) && ! empty( $settings['turnstile_site_key'] );
+		if ( $turnstile_enabled ) {
+			wp_enqueue_script( 'cmlc-turnstile', 'https://challenges.cloudflare.com/turnstile/v0/api.js', array(), CMLC_VERSION, true );
+		}
+
 		wp_localize_script(
 			'cmlc-frontend',
 			'cmlcConfig',
 			array(
-				'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
-				'nonce'            => wp_create_nonce( 'cmlc_nonce' ),
-				'scrollPercent'    => (int) $settings['scroll_trigger_percent'],
-				'timeDelay'        => (int) $settings['time_delay_seconds'],
-				'cooldownHours'    => (int) $settings['repetition_cooldown_hours'],
-				'maxViews'         => (int) $settings['max_views'],
-				'enableExitIntent' => ! empty( $settings['enable_exit_intent'] ),
-				'enableMobile'     => ! empty( $settings['enable_mobile'] ),
+				'ajaxUrl'               => admin_url( 'admin-ajax.php' ),
+				'nonce'                 => wp_create_nonce( 'cmlc_nonce' ),
+				'scrollPercent'         => (int) $settings['scroll_trigger_percent'],
+				'timeDelay'             => (int) $settings['time_delay_seconds'],
+				'cooldownHours'         => (int) $settings['repetition_cooldown_hours'],
+				'maxViews'              => (int) $settings['max_views'],
+				'enableExitIntent'      => ! empty( $settings['enable_exit_intent'] ),
+				'enableMobile'          => ! empty( $settings['enable_mobile'] ),
+				'turnstileEnabled'      => $turnstile_enabled,
+				'turnstileSiteKey'      => $turnstile_enabled ? (string) $settings['turnstile_site_key'] : '',
+				'turnstileResponseField'=> 'cf-turnstile-response',
 			)
 		);
 		$atts     = shortcode_atts(
@@ -57,6 +66,11 @@ class CMLC_Shortcodes {
 			<div class="cmlc-shortcode-body"><?php echo esc_html( $atts['body'] ); ?></div>
 			<form class="cmlc-shortcode-form" data-cmlc-form>
 				<input type="email" name="email" required placeholder="Email address">
+				<input type="text" name="website" value="" tabindex="-1" autocomplete="off" class="cmlc-honeypot" aria-hidden="true">
+				<?php if ( $turnstile_enabled ) : ?>
+					<div class="cf-turnstile" data-sitekey="<?php echo esc_attr( $settings['turnstile_site_key'] ); ?>" data-action="cmlc_submit"></div>
+					<input type="hidden" name="turnstile_token" value="">
+				<?php endif; ?>
 				<button type="submit"><?php echo esc_html( $atts['button'] ); ?></button>
 			</form>
 		</div>

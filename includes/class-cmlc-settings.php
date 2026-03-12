@@ -51,6 +51,10 @@ class CMLC_Settings {
 			'schedule_end'               => '',
 			'analytics_impressions'      => 0,
 			'analytics_submissions'      => 0,
+			'turnstile_enabled'          => 0,
+			'turnstile_site_key'         => '',
+			'turnstile_secret_key'       => '',
+			'turnstile_strict_mode'      => 1,
 		);
 	}
 
@@ -117,6 +121,10 @@ class CMLC_Settings {
 		$output['schedule_end']              = sanitize_text_field( $output['schedule_end'] );
 		$output['analytics_impressions']     = isset( $output['analytics_impressions'] ) ? absint( $output['analytics_impressions'] ) : 0;
 		$output['analytics_submissions']     = isset( $output['analytics_submissions'] ) ? absint( $output['analytics_submissions'] ) : 0;
+		$output['turnstile_enabled']         = empty( $output['turnstile_enabled'] ) ? 0 : 1;
+		$output['turnstile_site_key']        = sanitize_text_field( $output['turnstile_site_key'] );
+		$output['turnstile_secret_key']      = sanitize_text_field( $output['turnstile_secret_key'] );
+		$output['turnstile_strict_mode']     = empty( $output['turnstile_strict_mode'] ) ? 0 : 1;
 
 		return $output;
 	}
@@ -169,6 +177,22 @@ class CMLC_Settings {
 					<tr><th scope="row">Page IDs</th><td><input class="regular-text" name="cmlc_settings[page_ids]" value="<?php echo esc_attr( $settings['page_ids'] ); ?>"><p class="description">Comma-separated post/page IDs.</p></td></tr>
 					<tr><th scope="row">Schedule Start</th><td><input type="datetime-local" name="cmlc_settings[schedule_start]" value="<?php echo esc_attr( $settings['schedule_start'] ); ?>"></td></tr>
 					<tr><th scope="row">Schedule End</th><td><input type="datetime-local" name="cmlc_settings[schedule_end]" value="<?php echo esc_attr( $settings['schedule_end'] ); ?>"></td></tr>
+					<tr>
+						<th scope="row">Enable Turnstile</th>
+						<td>
+							<input type="checkbox" name="cmlc_settings[turnstile_enabled]" value="1" <?php checked( 1, $settings['turnstile_enabled'] ); ?>>
+							<p class="description">Require Cloudflare Turnstile verification before accepting submissions from infobar and shortcode forms.</p>
+						</td>
+					</tr>
+					<tr><th scope="row">Turnstile Site Key</th><td><input class="regular-text" name="cmlc_settings[turnstile_site_key]" value="<?php echo esc_attr( $settings['turnstile_site_key'] ); ?>"></td></tr>
+					<tr><th scope="row">Turnstile Secret Key</th><td><input type="password" class="regular-text" name="cmlc_settings[turnstile_secret_key]" value="<?php echo esc_attr( $settings['turnstile_secret_key'] ); ?>" autocomplete="new-password"></td></tr>
+					<tr>
+						<th scope="row">Turnstile Strict Mode</th>
+						<td>
+							<input type="checkbox" name="cmlc_settings[turnstile_strict_mode]" value="1" <?php checked( 1, $settings['turnstile_strict_mode'] ); ?>>
+							<p class="description">Fail closed when Turnstile verification service times out or errors. Recommended for production anti-spam protection.</p>
+						</td>
+					</tr>
 				</table>
 				<?php submit_button(); ?>
 			</form>
