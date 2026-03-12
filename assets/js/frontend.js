@@ -30,6 +30,21 @@
     return true;
   };
 
+
+  const getReferrerHost = () => {
+    try {
+      return document.referrer ? new URL(document.referrer).host : '';
+    } catch (e) {
+      return '';
+    }
+  };
+
+  const analyticsPayload = () => ({
+    page_id: Number(cfg.pageId || 0),
+    campaign_id: Number(cfg.campaignId || 1),
+    referrer_host: getReferrerHost()
+  });
+
   const postAjax = (action, payload = {}) => {
     const body = new URLSearchParams({ action, nonce: cfg.nonce, ...payload });
     return fetch(cfg.ajaxUrl, {
@@ -49,7 +64,7 @@
     state.views = (state.views || 0) + 1;
     saveState(state);
 
-    postAjax('cmlc_track_impression').catch(() => null);
+    postAjax('cmlc_track_impression', analyticsPayload()).catch(() => null);
   };
 
   const dismiss = () => {
@@ -93,7 +108,7 @@
       event.preventDefault();
       const email = form.querySelector('input[name="email"]').value;
 
-      postAjax('cmlc_submit_email', { email })
+      postAjax('cmlc_submit_email', { email, ...analyticsPayload() })
         .then((data) => {
           if (data && data.success) {
             if (status) status.textContent = data.data.message || 'Subscribed';
