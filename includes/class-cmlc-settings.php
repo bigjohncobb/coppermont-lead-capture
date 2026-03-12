@@ -75,7 +75,7 @@ class CMLC_Settings {
 	 * @return void
 	 */
 	public function register_settings() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! CMLC_Admin_Security::require_manage_options( false, false ) ) {
 			return;
 		}
 
@@ -139,9 +139,7 @@ class CMLC_Settings {
 	 * @return void
 	 */
 	public function render_page() {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'You do not have permission to access this page.', 'coppermont-lead-capture' ) );
-		}
+		CMLC_Admin_Security::require_manage_options();
 
 		$settings = self::get();
 		?>

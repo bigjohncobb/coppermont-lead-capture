@@ -42,6 +42,27 @@ Coppermont Lead Capture is a lightweight WordPress plugin for lead generation us
 - User input is sanitized server-side before persistence.
 - Admin settings rendering is protected by capability checks (`manage_options`).
 
+
+## Contributor Security Expectations
+
+When adding or updating admin-facing endpoints (AJAX, `admin-post.php`, or page actions), contributors must:
+
+- Require `manage_options` authorization using `CMLC_Admin_Security::require_manage_options()`.
+- Validate request intent with `CMLC_Admin_Security::require_admin_referer()` using an action-specific nonce.
+- Return a hard deny on auth failure:
+  - `wp_send_json_error(..., 403)` for JSON/AJAX handlers.
+  - `wp_die(..., 403)` for direct admin handlers.
+- Avoid mutating settings or analytics before both checks pass.
+
+### Manual Security Verification Checklist
+
+Run this checklist for any new admin action (dashboard filters, exports, bulk deletes, reset actions):
+
+1. As a non-admin user, hit each endpoint directly and confirm a 403 response (JSON or wp_die).
+2. As an admin user with an invalid/missing nonce, hit each endpoint and confirm a 403 response.
+3. As an admin user with a valid nonce, confirm expected behavior succeeds.
+4. Verify no state changes occur for failed checks (no export action, no deletes, no analytics reset).
+
 ## Uninstall Behavior
 
 The plugin includes `uninstall.php` and removes the `cmlc_settings` option when uninstalled via WordPress.
