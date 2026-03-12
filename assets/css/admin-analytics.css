@@ -1,0 +1,63 @@
+.cmlc-analytics .cmlc-analytics-filters {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	gap: 12px;
+	margin: 18px 0;
+	padding: 12px;
+	background: #fff;
+	border: 1px solid #dcdcde;
+}
+
+.cmlc-analytics .cmlc-analytics-filters label span {
+	display: block;
+	font-weight: 600;
+	margin-bottom: 4px;
+}
+
+.cmlc-analytics .cmlc-filter-actions {
+	display: flex;
+	gap: 8px;
+	align-items: end;
+}
+
+.cmlc-analytics .cmlc-kpi-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+	gap: 12px;
+	margin-bottom: 18px;
+}
+
+.cmlc-analytics .cmlc-kpi-card {
+	background: #fff;
+	border: 1px solid #dcdcde;
+	padding: 16px;
+}
+
+.cmlc-analytics .cmlc-kpi-card h2 {
+	margin: 0 0 6px;
+	font-size: 14px;
+}
+
+.cmlc-analytics .cmlc-kpi-card p {
+	margin: 0;
+	font-size: 26px;
+	font-weight: 700;
+}
+
+.cmlc-analytics .cmlc-analytics-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 14px;
+}
+
+.cmlc-analytics .cmlc-panel {
+	background: #fff;
+	padding: 12px;
+	border: 1px solid #dcdcde;
+}
+
+@media (max-width: 960px) {
+	.cmlc-analytics .cmlc-analytics-grid {
+		grid-template-columns: 1fr;
+	}
+}
