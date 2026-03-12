@@ -3,7 +3,7 @@
  * Plugin Name: Coppermont Lead Capture
  * Plugin URI:  https://example.com
  * Description: Lead generation popups and infobars with targeting, scheduling, and analytics.
- * Version:     0.1.1
+ * Version:     0.2.0
  * Author:      Coppermont
  * Text Domain: coppermont-lead-capture
  */
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'CMLC_VERSION', '0.1.1' );
+define( 'CMLC_VERSION', '0.2.0' );
 define( 'CMLC_PATH', plugin_dir_path( __FILE__ ) );
 define( 'CMLC_URL', plugin_dir_url( __FILE__ ) );
 

@@ -30,8 +30,19 @@
     return true;
   };
 
+  const inferCampaignId = () => {
+    const fromConfig = parseInt(cfg.campaignId, 10);
+    if (!Number.isNaN(fromConfig) && fromConfig > 0) return fromConfig;
+    if (bar && bar.dataset && bar.dataset.campaignId) return parseInt(bar.dataset.campaignId, 10) || 0;
+    if (form) {
+      const campaignInput = form.querySelector('input[name="campaign_id"]');
+      if (campaignInput) return parseInt(campaignInput.value, 10) || 0;
+    }
+    return 0;
+  };
+
   const postAjax = (action, payload = {}) => {
-    const body = new URLSearchParams({ action, nonce: cfg.nonce, ...payload });
+    const body = new URLSearchParams({ action, nonce: cfg.nonce, campaign_id: inferCampaignId(), ...payload });
     return fetch(cfg.ajaxUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

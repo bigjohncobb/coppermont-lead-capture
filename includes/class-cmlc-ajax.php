@@ -30,11 +30,20 @@ class CMLC_Ajax {
 
 		check_ajax_referer( 'cmlc_nonce', 'nonce' );
 
-		$settings                          = CMLC_Settings::get();
-		$settings['analytics_impressions'] = absint( $settings['analytics_impressions'] ) + 1;
-		update_option( CMLC_Settings::OPTION_KEY, $settings );
+		$campaign_id = isset( $_POST['campaign_id'] ) ? absint( wp_unslash( $_POST['campaign_id'] ) ) : 0;
+		$campaign    = CMLC_Campaigns::resolve_campaign( $campaign_id );
+		if ( ! $campaign ) {
+			wp_send_json_error( array( 'message' => 'Campaign not found.' ), 404 );
+		}
 
-		wp_send_json_success( array( 'impressions' => $settings['analytics_impressions'] ) );
+		CMLC_Analytics::record_impression( (int) $campaign['id'] );
+
+		wp_send_json_success(
+			array(
+				'campaign_id' => (int) $campaign['id'],
+				'message'     => 'Impression tracked.',
+			)
+		);
 	}
 
 	/**
@@ -54,14 +63,19 @@ class CMLC_Ajax {
 			wp_send_json_error( array( 'message' => 'Please provide a valid email.' ), 400 );
 		}
 
-		$settings                          = CMLC_Settings::get();
-		$settings['analytics_submissions'] = absint( $settings['analytics_submissions'] ) + 1;
-		update_option( CMLC_Settings::OPTION_KEY, $settings );
+		$campaign_id = isset( $_POST['campaign_id'] ) ? absint( wp_unslash( $_POST['campaign_id'] ) ) : 0;
+		$campaign    = CMLC_Campaigns::resolve_campaign( $campaign_id );
+		if ( ! $campaign ) {
+			wp_send_json_error( array( 'message' => 'Campaign not found.' ), 404 );
+		}
+
+		CMLC_Analytics::record_submission( (int) $campaign['id'] );
+		CMLC_Analytics::record_lead( (int) $campaign['id'], $email );
 
 		/**
 		 * Fires after lead form submission for CRM integrations.
 		 */
-		do_action( 'cmlc_lead_submitted', $email, $settings );
+		do_action( 'cmlc_lead_submitted', $email, $campaign );
 
 		wp_send_json_success( array( 'message' => 'Thanks! You are subscribed.' ) );
 	}
