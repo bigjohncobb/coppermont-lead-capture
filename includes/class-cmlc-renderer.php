@@ -137,7 +137,8 @@ class CMLC_Renderer {
 	 * @return bool
 	 */
 	private function passes_referrer_rules( $settings ) {
-		$allowed = array_filter( array_map( 'trim', explode( ',', (string) $settings['allowed_referrers'] ) ) );
+		$allowed = $this->normalize_allowed_referrers( (string) $settings['allowed_referrers'] );
+
 		if ( empty( $allowed ) ) {
 			return true;
 		}
@@ -148,16 +149,95 @@ class CMLC_Renderer {
 		}
 
 		$host = wp_parse_url( $referrer, PHP_URL_HOST );
+		$host = is_string( $host ) ? $this->normalize_domain( $host ) : '';
+
 		if ( empty( $host ) ) {
 			return false;
 		}
 
-		foreach ( $allowed as $domain ) {
-			if ( false !== stripos( $host, $domain ) ) {
+		foreach ( $allowed as $rule ) {
+			if ( $this->host_matches_rule( $host, $rule ) ) {
 				return true;
 			}
 		}
 
 		return false;
+	}
+
+	/**
+	 * Normalizes a comma-separated allowlist into exact/wildcard rules.
+	 *
+	 * @param string $allowed_referrers Raw allowlist.
+	 * @return array<int,array{domain:string,allow_subdomains:bool}>
+	 */
+	private function normalize_allowed_referrers( $allowed_referrers ) {
+		$rules = array();
+
+		foreach ( array_map( 'trim', explode( ',', $allowed_referrers ) ) as $entry ) {
+			if ( '' === $entry ) {
+				continue;
+			}
+
+			$allow_subdomains = 0 === strpos( $entry, '*.' );
+			$domain           = $allow_subdomains ? substr( $entry, 2 ) : $entry;
+			$domain           = $this->normalize_domain( $domain );
+
+			if ( '' === $domain ) {
+				continue;
+			}
+
+			$rules[] = array(
+				'domain'           => $domain,
+				'allow_subdomains' => $allow_subdomains,
+			);
+		}
+
+		return $rules;
+	}
+
+	/**
+	 * Normalizes and canonicalizes domains for matching.
+	 *
+	 * @param string $domain Raw domain.
+	 * @return string
+	 */
+	private function normalize_domain( $domain ) {
+		$domain = strtolower( trim( $domain ) );
+		$domain = rtrim( $domain, '.' );
+
+		if ( '' === $domain ) {
+			return '';
+		}
+
+		if ( function_exists( 'idn_to_ascii' ) ) {
+			$flags      = defined( 'IDNA_DEFAULT' ) ? IDNA_DEFAULT : 0;
+			$idn_domain = idn_to_ascii( $domain, $flags, defined( 'INTL_IDNA_VARIANT_UTS46' ) ? INTL_IDNA_VARIANT_UTS46 : 0 );
+			if ( false !== $idn_domain && '' !== $idn_domain ) {
+				$domain = strtolower( $idn_domain );
+			}
+		}
+
+		return $domain;
+	}
+
+	/**
+	 * Evaluates strict exact/wildcard host matching.
+	 *
+	 * @param string                                 $host Normalized host.
+	 * @param array{domain:string,allow_subdomains:bool} $rule Matching rule.
+	 * @return bool
+	 */
+	private function host_matches_rule( $host, $rule ) {
+		if ( $host === $rule['domain'] ) {
+			return true;
+		}
+
+		if ( empty( $rule['allow_subdomains'] ) ) {
+			return false;
+		}
+
+		return strlen( $host ) > strlen( $rule['domain'] )
+			&& substr( $host, -strlen( $rule['domain'] ) ) === $rule['domain']
+			&& '.' === substr( $host, -strlen( $rule['domain'] ) - 1, 1 );
 	}
 }
