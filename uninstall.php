@@ -9,4 +9,6 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;
 }
 
-delete_option( 'cmlc_settings' );
+require_once __DIR__ . '/includes/class-cmlc-data-manager.php';
+
+CMLC_Data_Manager::delete_all_data();

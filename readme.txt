@@ -29,5 +29,19 @@ Optional attributes:
 - User inputs are sanitized before saving.
 - Admin settings are protected by `manage_options` capability checks.
 
+
+== Data Management ==
+The plugin admin page includes a **Data Management** section with two deliberate maintenance actions:
+
+- **Reset analytics only**
+- **Delete all plugin data (irreversible)**
+
+Safety protections:
+- Requires `manage_options` capability.
+- Actions use nonce verification.
+- Full deletion requires typing `DELETE ALL DATA` to confirm.
+
+These tools are intentionally destructive. Use full deletion only when you are certain all plugin data should be permanently removed.
+
 == Uninstall ==
-On uninstall, plugin settings are removed via `uninstall.php`.
+On uninstall, plugin data is deleted via `uninstall.php` using the shared data manager service.
