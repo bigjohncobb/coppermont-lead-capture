@@ -30,4 +30,8 @@ Optional attributes:
 - Admin settings are protected by `manage_options` capability checks.
 
 == Uninstall ==
-On uninstall, plugin settings are removed via `uninstall.php`.
+By default, uninstalling preserves plugin data (`keep_data_on_uninstall` is enabled by default).
+
+To fully remove plugin data, go to **Settings > Lead Capture > Data & Privacy** and disable **Keep plugin data when uninstalling** before deleting the plugin.
+
+When full removal is enabled, `uninstall.php` deletes plugin-owned options, known custom tables (`cmlc_analytics`, `cmlc_leads`, `cmlc_campaigns`), campaign CPT content (`cmlc_campaign`), plugin transients, and scheduled cron events.
