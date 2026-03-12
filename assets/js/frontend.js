@@ -89,11 +89,33 @@
   }
 
   if (form) {
-    form.addEventListener('submit', (event) => {
+    form.addEventListener('submit', async (event) => {
       event.preventDefault();
-      const email = form.querySelector('input[name="email"]').value;
+      const emailInput = form.querySelector('input[name="email"]');
+      const honeypotInput = form.querySelector('input[name="cmlc_website"]');
+      const timestampInput = form.querySelector('input[name="cmlc_form_token"]');
+      const captchaInput = form.querySelector('input[name="captcha_token"]');
 
-      postAjax('cmlc_submit_email', { email })
+      if (cfg.enableCaptcha) {
+        const captchaEvent = new CustomEvent('cmlc:captcha:request', {
+          detail: {
+            setToken: (token) => {
+              if (captchaInput) captchaInput.value = token || '';
+            },
+            form
+          }
+        });
+        document.dispatchEvent(captchaEvent);
+      }
+
+      const payload = {
+        email: emailInput ? emailInput.value : '',
+        cmlc_website: honeypotInput ? honeypotInput.value : '',
+        cmlc_form_token: timestampInput ? timestampInput.value : '',
+        captcha_token: captchaInput ? captchaInput.value : ''
+      };
+
+      postAjax('cmlc_submit_email', payload)
         .then((data) => {
           if (data && data.success) {
             if (status) status.textContent = data.data.message || 'Subscribed';

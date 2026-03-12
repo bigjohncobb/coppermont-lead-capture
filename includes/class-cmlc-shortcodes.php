@@ -38,6 +38,7 @@ class CMLC_Shortcodes {
 				'maxViews'         => (int) $settings['max_views'],
 				'enableExitIntent' => ! empty( $settings['enable_exit_intent'] ),
 				'enableMobile'     => ! empty( $settings['enable_mobile'] ),
+				'enableCaptcha'    => ! empty( $settings['enable_captcha_validation'] ),
 			)
 		);
 		$atts     = shortcode_atts(
@@ -57,6 +58,9 @@ class CMLC_Shortcodes {
 			<div class="cmlc-shortcode-body"><?php echo esc_html( $atts['body'] ); ?></div>
 			<form class="cmlc-shortcode-form" data-cmlc-form>
 				<input type="email" name="email" required placeholder="Email address">
+				<input type="text" name="cmlc_website" class="cmlc-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+				<input type="hidden" name="cmlc_form_token" value="<?php echo esc_attr( CMLC_Ajax::create_form_timestamp_token() ); ?>">
+				<input type="hidden" name="captcha_token" value="">
 				<button type="submit"><?php echo esc_html( $atts['button'] ); ?></button>
 			</form>
 		</div>
