@@ -4,7 +4,7 @@ Requires at least: 6.0
 Tested up to: 6.5
 Stable tag: 0.1.1
 
-Lead generation infobar and popup-style trigger engine with scheduling, targeting, repetition control, and analytics.
+Lead generation infobar and popup-style trigger engine with scheduling, targeting, repetition control, analytics, and Turnstile verification.
 
 == Description ==
 Coppermont Lead Capture provides a mobile-responsive lead capture infobar with conversion-oriented trigger controls and analytics.
@@ -15,6 +15,20 @@ Key capabilities:
 - Referral detection and page-level targeting.
 - Scheduler windows and repetition control.
 - Analytics counters for impressions (times shown) and submissions.
+- Cloudflare Turnstile verification for infobar and shortcode forms.
+- Strict mode to fail closed when verification service is unavailable.
+
+== Turnstile Setup ==
+1. Create a Turnstile widget in Cloudflare.
+2. Copy Site Key and Secret Key.
+3. Go to Settings > Lead Capture and enable Turnstile.
+4. Save Site Key and Secret Key.
+5. Keep Turnstile Strict Mode enabled to block submissions on verification outage/timeouts.
+
+Troubleshooting:
+- If you see "Captcha verification is required," ensure Turnstile JS is loading and the widget appears.
+- If verification fails, check that your domain is configured in Turnstile and action is `cmlc_submit`.
+- If strict mode blocks submissions, verify server connectivity to `https://challenges.cloudflare.com/turnstile/v0/siteverify`.
 
 == Shortcodes ==
 Use `[coppermont_infobar]` to embed a lead capture form inline.
@@ -28,6 +42,8 @@ Optional attributes:
 - AJAX endpoints require a nonce.
 - User inputs are sanitized before saving.
 - Admin settings are protected by `manage_options` capability checks.
+- Turnstile verification is enforced server-side before accepting a submission when enabled.
+- Honeypot field remains active as a secondary anti-spam measure.
 
 == Uninstall ==
 On uninstall, plugin settings are removed via `uninstall.php`.

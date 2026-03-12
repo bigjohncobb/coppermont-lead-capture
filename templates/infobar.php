@@ -17,6 +17,10 @@
 		<input type="text" name="cmlc_website" class="cmlc-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
 		<input type="hidden" name="cmlc_form_token" value="<?php echo esc_attr( CMLC_Ajax::create_form_timestamp_token() ); ?>">
 		<input type="hidden" name="captcha_token" value="">
+		<?php if ( ! empty( $settings['turnstile_enabled'] ) && ! empty( $settings['turnstile_site_key'] ) ) : ?>
+			<div class="cf-turnstile" data-sitekey="<?php echo esc_attr( $settings['turnstile_site_key'] ); ?>" data-action="cmlc_submit"></div>
+			<input type="hidden" name="turnstile_token" value="">
+		<?php endif; ?>
 		<button type="submit"><?php echo esc_html( $settings['button_text'] ); ?></button>
 	</form>
 	<p class="cmlc-status" data-cmlc-status aria-live="polite"></p>

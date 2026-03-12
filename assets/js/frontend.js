@@ -1,10 +1,11 @@
 (function () {
   const bar = document.querySelector('[data-cmlc-infobar]');
   const cfg = window.cmlcConfig || {};
-  if (!bar && !document.querySelector('[data-cmlc-form]')) return;
+  const forms = Array.from(document.querySelectorAll('[data-cmlc-form]'));
+
+  if (!bar && forms.length === 0) return;
 
   const storageKey = 'cmlcState';
-  const form = document.querySelector('[data-cmlc-form]');
   const closeBtn = bar ? bar.querySelector('[data-cmlc-close]') : null;
   const status = bar ? bar.querySelector('[data-cmlc-status]') : null;
 
@@ -37,6 +38,17 @@
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body
     }).then((res) => res.json());
+  };
+
+  const getTurnstileToken = (form) => {
+    const fallbackField = form.querySelector('input[name="turnstile_token"]');
+    const responseFieldName = cfg.turnstileResponseField || 'cf-turnstile-response';
+    const nativeField = form.querySelector(`input[name="${responseFieldName}"], textarea[name="${responseFieldName}"]`);
+    const token = (nativeField && nativeField.value) || (fallbackField && fallbackField.value) || '';
+
+    if (fallbackField) fallbackField.value = token;
+
+    return token;
   };
 
   const show = () => {
@@ -88,7 +100,7 @@
     closeBtn.addEventListener('click', dismiss);
   }
 
-  if (form) {
+  forms.forEach((form) => {
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
       const emailInput = form.querySelector('input[name="email"]');
@@ -108,11 +120,14 @@
         document.dispatchEvent(captchaEvent);
       }
 
+      const turnstileToken = getTurnstileToken(form);
+
       const payload = {
         email: emailInput ? emailInput.value : '',
         cmlc_website: honeypotInput ? honeypotInput.value : '',
         cmlc_form_token: timestampInput ? timestampInput.value : '',
-        captcha_token: captchaInput ? captchaInput.value : ''
+        captcha_token: captchaInput ? captchaInput.value : '',
+        turnstile_token: turnstileToken
       };
 
       postAjax('cmlc_submit_email', payload)
@@ -120,13 +135,13 @@
           if (data && data.success) {
             if (status) status.textContent = data.data.message || 'Subscribed';
             dismiss();
-          } else {
-            if (status) status.textContent = (data && data.data && data.data.message) || 'Unable to submit.';
+          } else if (status) {
+            status.textContent = (data && data.data && data.data.message) || 'Unable to submit.';
           }
         })
         .catch(() => {
           if (status) status.textContent = 'Network error. Please try again.';
         });
     });
-  }
+  });
 })();

@@ -21,12 +21,40 @@ Coppermont Lead Capture is a lightweight WordPress plugin for lead generation us
   - Submission count.
 - Shortcode support:
   - `[coppermont_infobar]`
+- Cloudflare Turnstile support:
+  - Optional verification on infobar + shortcode forms.
+  - Strict mode (fail closed on verification outages).
+  - Hostname/action validation at submission time.
+- Defense-in-depth:
+  - Nonce protection, email sanitization, and a honeypot field.
 
 ## Installation
 
 1. Upload the plugin folder to `wp-content/plugins/coppermont-lead-capture`.
 2. Activate **Coppermont Lead Capture** from **Plugins**.
 3. Configure options in **Settings > Lead Capture**.
+
+## Turnstile Setup
+
+1. In Cloudflare Turnstile, create a widget for your site.
+2. Copy the **Site Key** and **Secret Key**.
+3. In **Settings > Lead Capture**:
+   - Enable **Enable Turnstile**.
+   - Paste **Turnstile Site Key**.
+   - Paste **Turnstile Secret Key**.
+   - Leave **Turnstile Strict Mode** enabled for production.
+4. Save settings and test both infobar and shortcode submissions.
+
+### Strict mode behavior
+
+When strict mode is enabled, if Cloudflare verification times out or errors, submissions are blocked (fail closed). Disable strict mode only if you accept temporary degraded anti-spam protection during provider/network incidents.
+
+### Troubleshooting
+
+- **"Captcha verification is required."**: Client token not present; ensure the Turnstile widget loads and browser JS is enabled.
+- **"Captcha verification failed."**: Token expired/invalid, or the request did not pass Cloudflare checks.
+- **Hostname/action validation errors**: Ensure your Turnstile widget is configured for the correct domain and used with action `cmlc_submit`.
+- **Submissions blocked in strict mode**: Check outbound server connectivity to `https://challenges.cloudflare.com/turnstile/v0/siteverify`.
 
 ## Shortcode
 
@@ -41,6 +69,7 @@ Coppermont Lead Capture is a lightweight WordPress plugin for lead generation us
 - AJAX handlers enforce nonce verification.
 - User input is sanitized server-side before persistence.
 - Admin settings rendering is protected by capability checks (`manage_options`).
+- Turnstile verification is enforced server-side before submission analytics increment.
 
 ## Uninstall Behavior
 

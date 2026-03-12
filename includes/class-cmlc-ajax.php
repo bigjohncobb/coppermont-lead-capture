@@ -113,6 +113,23 @@ class CMLC_Ajax {
 			wp_send_json_error( array( 'message' => self::BOT_FAILURE_MESSAGE ), 400 );
 		}
 
+		if ( ! empty( $settings['turnstile_enabled'] ) ) {
+			$token = isset( $_POST['turnstile_token'] ) ? sanitize_text_field( wp_unslash( $_POST['turnstile_token'] ) ) : '';
+			if ( empty( $token ) ) {
+				$token = isset( $_POST['cf-turnstile-response'] ) ? sanitize_text_field( wp_unslash( $_POST['cf-turnstile-response'] ) ) : '';
+			}
+
+			if ( empty( $token ) ) {
+				wp_send_json_error( array( 'message' => 'Captcha verification is required.' ), 400 );
+			}
+
+			$verification_result = $this->verify_turnstile_token( $token, $settings );
+			if ( is_wp_error( $verification_result ) ) {
+				$status = 'strict_mode' === $verification_result->get_error_code() ? 403 : 400;
+				wp_send_json_error( array( 'message' => $verification_result->get_error_message() ), $status );
+			}
+		}
+
 		$settings['analytics_submissions'] = absint( $settings['analytics_submissions'] ) + 1;
 		update_option( CMLC_Settings::OPTION_KEY, $settings );
 
@@ -181,6 +198,65 @@ class CMLC_Ajax {
 		$elapsed = time() - $timestamp;
 		if ( $elapsed < self::MIN_FILL_SECONDS || $elapsed > DAY_IN_SECONDS ) {
 			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Verifies a Turnstile token.
+	 *
+	 * @param string              $token Turnstile response token.
+	 * @param array<string,mixed> $settings Plugin settings.
+	 * @return true|WP_Error
+	 */
+	private function verify_turnstile_token( $token, $settings ) {
+		$secret = isset( $settings['turnstile_secret_key'] ) ? trim( (string) $settings['turnstile_secret_key'] ) : '';
+		if ( empty( $secret ) ) {
+			return new WP_Error( 'turnstile_config', 'Turnstile secret key is not configured.' );
+		}
+
+		$request = wp_remote_post(
+			'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+			array(
+				'timeout' => 8,
+				'body'    => array(
+					'secret'   => $secret,
+					'response' => $token,
+					'remoteip' => isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '',
+				),
+			)
+		);
+
+		if ( is_wp_error( $request ) ) {
+			if ( ! empty( $settings['turnstile_strict_mode'] ) ) {
+				return new WP_Error( 'strict_mode', 'Turnstile verification service is unavailable. Submission blocked by strict mode.' );
+			}
+
+			return true;
+		}
+
+		$status_code = (int) wp_remote_retrieve_response_code( $request );
+		$body        = json_decode( (string) wp_remote_retrieve_body( $request ), true );
+		if ( 200 !== $status_code || ! is_array( $body ) ) {
+			if ( ! empty( $settings['turnstile_strict_mode'] ) ) {
+				return new WP_Error( 'strict_mode', 'Turnstile verification did not return a valid response. Submission blocked by strict mode.' );
+			}
+
+			return true;
+		}
+
+		if ( empty( $body['success'] ) ) {
+			return new WP_Error( 'turnstile_failed', 'Captcha verification failed. Please try again.' );
+		}
+
+		$expected_host = wp_parse_url( home_url(), PHP_URL_HOST );
+		if ( ! empty( $body['hostname'] ) && ! empty( $expected_host ) && ! hash_equals( strtolower( (string) $expected_host ), strtolower( (string) $body['hostname'] ) ) ) {
+			return new WP_Error( 'turnstile_failed', 'Captcha verification failed hostname validation.' );
+		}
+
+		if ( ! empty( $body['action'] ) && 'cmlc_submit' !== (string) $body['action'] ) {
+			return new WP_Error( 'turnstile_failed', 'Captcha verification failed action validation.' );
 		}
 
 		return true;

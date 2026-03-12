@@ -52,6 +52,10 @@ class CMLC_Settings {
 			'analytics_impressions'      => 0,
 			'analytics_submissions'      => 0,
 			'enable_captcha_validation'  => 0,
+			'turnstile_enabled'          => 0,
+			'turnstile_site_key'         => '',
+			'turnstile_secret_key'       => '',
+			'turnstile_strict_mode'      => 1,
 		);
 	}
 
@@ -162,6 +166,10 @@ class CMLC_Settings {
 		$settings['body']        = isset( $raw['body'] ) ? sanitize_text_field( $raw['body'] ) : $settings['body'];
 		$settings['button_text'] = isset( $raw['button_text'] ) ? sanitize_text_field( $raw['button_text'] ) : $settings['button_text'];
 		$settings['enable_captcha_validation'] = empty( $raw['enable_captcha_validation'] ) ? 0 : 1;
+		$settings['turnstile_enabled']     = empty( $raw['turnstile_enabled'] ) ? 0 : 1;
+		$settings['turnstile_site_key']    = isset( $raw['turnstile_site_key'] ) ? sanitize_text_field( $raw['turnstile_site_key'] ) : $settings['turnstile_site_key'];
+		$settings['turnstile_secret_key']  = isset( $raw['turnstile_secret_key'] ) ? sanitize_text_field( $raw['turnstile_secret_key'] ) : $settings['turnstile_secret_key'];
+		$settings['turnstile_strict_mode'] = empty( $raw['turnstile_strict_mode'] ) ? 0 : 1;
 
 		if ( empty( $settings['headline'] ) ) {
 			add_settings_error( 'cmlc_settings', 'cmlc_headline_required', __( 'Headline is required.', 'coppermont-lead-capture' ), 'error' );
@@ -301,6 +309,22 @@ class CMLC_Settings {
 							<tr><th scope="row">Body</th><td><input class="regular-text" name="cmlc_settings[body]" value="<?php echo esc_attr( $settings['body'] ); ?>"></td></tr>
 							<tr><th scope="row">Button Text</th><td><input name="cmlc_settings[button_text]" value="<?php echo esc_attr( $settings['button_text'] ); ?>"></td></tr>
 							<tr><th scope="row">Enable CAPTCHA Validation</th><td><input type="checkbox" name="cmlc_settings[enable_captcha_validation]" value="1" <?php checked( 1, $settings['enable_captcha_validation'] ); ?>><p class="description">Uses the cmlc_validate_captcha filter for reCAPTCHA/hCaptcha providers.</p></td></tr>
+							<tr>
+								<th scope="row">Enable Turnstile</th>
+								<td>
+									<input type="checkbox" name="cmlc_settings[turnstile_enabled]" value="1" <?php checked( 1, $settings['turnstile_enabled'] ); ?>>
+									<p class="description">Require Cloudflare Turnstile verification before accepting submissions from infobar and shortcode forms.</p>
+								</td>
+							</tr>
+							<tr><th scope="row">Turnstile Site Key</th><td><input class="regular-text" name="cmlc_settings[turnstile_site_key]" value="<?php echo esc_attr( $settings['turnstile_site_key'] ); ?>"></td></tr>
+							<tr><th scope="row">Turnstile Secret Key</th><td><input type="password" class="regular-text" name="cmlc_settings[turnstile_secret_key]" value="<?php echo esc_attr( $settings['turnstile_secret_key'] ); ?>" autocomplete="new-password"></td></tr>
+							<tr>
+								<th scope="row">Turnstile Strict Mode</th>
+								<td>
+									<input type="checkbox" name="cmlc_settings[turnstile_strict_mode]" value="1" <?php checked( 1, $settings['turnstile_strict_mode'] ); ?>>
+									<p class="description">Fail closed when Turnstile verification service times out or errors. Recommended for production anti-spam protection.</p>
+								</td>
+							</tr>
 						<?php elseif ( 'design' === $active_tab ) : ?>
 							<tr><th scope="row">Background Color</th><td><input type="color" name="cmlc_settings[bg_color]" value="<?php echo esc_attr( $settings['bg_color'] ); ?>"></td></tr>
 							<tr><th scope="row">Text Color</th><td><input type="color" name="cmlc_settings[text_color]" value="<?php echo esc_attr( $settings['text_color'] ); ?>"></td></tr>

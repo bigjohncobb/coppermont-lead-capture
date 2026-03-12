@@ -31,6 +31,11 @@ class CMLC_Renderer {
 		wp_enqueue_style( 'cmlc-frontend', CMLC_URL . 'assets/css/frontend.css', array(), CMLC_VERSION );
 		wp_enqueue_script( 'cmlc-frontend', CMLC_URL . 'assets/js/frontend.js', array(), CMLC_VERSION, true );
 
+		$turnstile_enabled = ! empty( $settings['turnstile_enabled'] ) && ! empty( $settings['turnstile_site_key'] );
+		if ( $turnstile_enabled ) {
+			wp_enqueue_script( 'cmlc-turnstile', 'https://challenges.cloudflare.com/turnstile/v0/api.js', array(), CMLC_VERSION, true );
+		}
+
 		wp_localize_script(
 			'cmlc-frontend',
 			'cmlcConfig',
@@ -44,6 +49,9 @@ class CMLC_Renderer {
 				'enableExitIntent'      => ! empty( $settings['enable_exit_intent'] ),
 				'enableMobile'          => ! empty( $settings['enable_mobile'] ),
 				'enableCaptcha'         => ! empty( $settings['enable_captcha_validation'] ),
+				'turnstileEnabled'      => $turnstile_enabled,
+				'turnstileSiteKey'      => $turnstile_enabled ? (string) $settings['turnstile_site_key'] : '',
+				'turnstileResponseField'=> 'cf-turnstile-response',
 			)
 		);
 	}
