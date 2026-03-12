@@ -137,7 +137,7 @@ class CMLC_Renderer {
 	 * @return bool
 	 */
 	private function passes_referrer_rules( $settings ) {
-		$allowed = array_filter( array_map( 'trim', explode( ',', (string) $settings['allowed_referrers'] ) ) );
+		$allowed = self::normalize_allowed_referrer_domains( (string) $settings['allowed_referrers'] );
 		if ( empty( $allowed ) ) {
 			return true;
 		}
@@ -147,17 +147,90 @@ class CMLC_Renderer {
 			return false;
 		}
 
-		$host = wp_parse_url( $referrer, PHP_URL_HOST );
-		if ( empty( $host ) ) {
+		$host = self::normalize_domain( (string) wp_parse_url( $referrer, PHP_URL_HOST ) );
+		if ( '' === $host ) {
 			return false;
 		}
 
-		foreach ( $allowed as $domain ) {
-			if ( false !== stripos( $host, $domain ) ) {
+		foreach ( $allowed as $rule ) {
+			if ( self::host_matches_referrer_rule( $host, $rule ) ) {
 				return true;
 			}
 		}
 
 		return false;
+	}
+
+	/**
+	 * Normalizes configured referrer allowlist domains.
+	 *
+	 * Supports exact domains (example.com) and explicit wildcard subdomains (*.example.com).
+	 *
+	 * @param string $allowed_referrers Comma-separated referrer domains.
+	 * @return array<int,string>
+	 */
+	public static function normalize_allowed_referrer_domains( $allowed_referrers ) {
+		$domains = array_filter( array_map( 'trim', explode( ',', $allowed_referrers ) ) );
+		$rules   = array();
+
+		foreach ( $domains as $domain ) {
+			$wildcard = 0 === strpos( $domain, '*.' );
+			$base     = $wildcard ? substr( $domain, 2 ) : $domain;
+			$base     = self::normalize_domain( $base );
+
+			if ( '' === $base ) {
+				continue;
+			}
+
+			$rules[] = $wildcard ? '*.' . $base : $base;
+		}
+
+		return array_values( array_unique( $rules ) );
+	}
+
+	/**
+	 * Normalizes domains for safe, exact host comparisons.
+	 *
+	 * @param string $domain Domain to normalize.
+	 * @return string
+	 */
+	public static function normalize_domain( $domain ) {
+		$domain = strtolower( trim( $domain ) );
+		$domain = trim( $domain, ". \t\n\r\0\x0B" );
+
+		if ( '' === $domain ) {
+			return '';
+		}
+
+		if ( function_exists( 'idn_to_ascii' ) ) {
+			$idn_domain = idn_to_ascii( $domain, IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46 );
+			if ( false !== $idn_domain ) {
+				$domain = strtolower( $idn_domain );
+			}
+		}
+
+		return $domain;
+	}
+
+	/**
+	 * Validates a host against an allowlist rule.
+	 *
+	 * @param string $host Normalized host.
+	 * @param string $rule Normalized allowlist rule.
+	 * @return bool
+	 */
+	public static function host_matches_referrer_rule( $host, $rule ) {
+		if ( 0 === strpos( $rule, '*.' ) ) {
+			$base = substr( $rule, 2 );
+
+			if ( '' === $base || $host === $base ) {
+				return false;
+			}
+
+			$suffix = '.' . $base;
+			return strlen( $host ) > strlen( $suffix ) && substr( $host, -strlen( $suffix ) ) === $suffix;
+		}
+
+		return $host === $rule;
 	}
 }
