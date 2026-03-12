@@ -8,6 +8,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 require_once CMLC_PATH . 'includes/class-cmlc-settings.php';
+require_once CMLC_PATH . 'includes/class-cmlc-leads.php';
+require_once CMLC_PATH . 'includes/class-cmlc-leads-admin.php';
 require_once CMLC_PATH . 'includes/class-cmlc-shortcodes.php';
 require_once CMLC_PATH . 'includes/class-cmlc-renderer.php';
 require_once CMLC_PATH . 'includes/class-cmlc-ajax.php';
@@ -49,6 +51,12 @@ class CMLC_Plugin {
 		if ( false === get_option( 'cmlc_settings' ) ) {
 			add_option( 'cmlc_settings', CMLC_Settings::defaults() );
 		}
+
+		CMLC_Leads::maybe_create_table();
+
+		$settings                          = CMLC_Settings::get();
+		$settings['analytics_submissions'] = CMLC_Leads::count_leads();
+		update_option( CMLC_Settings::OPTION_KEY, $settings );
 	}
 
 	/**
@@ -66,7 +74,9 @@ class CMLC_Plugin {
 	 * @return void
 	 */
 	public function bootstrap() {
+		CMLC_Leads::maybe_create_table();
 		new CMLC_Settings();
+		new CMLC_Leads_Admin();
 		new CMLC_Shortcodes();
 		new CMLC_Renderer();
 		new CMLC_Ajax();

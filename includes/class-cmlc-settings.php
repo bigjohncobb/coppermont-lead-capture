@@ -19,7 +19,7 @@ class CMLC_Settings {
 	 * Constructor.
 	 */
 	public function __construct() {
-		add_action( 'admin_menu', array( $this, 'add_settings_page' ) );
+		add_action( 'admin_menu', array( $this, 'register_admin_menu' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
 	}
 
@@ -59,10 +59,21 @@ class CMLC_Settings {
 	 *
 	 * @return void
 	 */
-	public function add_settings_page() {
-		add_options_page(
+	public function register_admin_menu() {
+		add_menu_page(
 			'Coppermont Lead Capture',
 			'Lead Capture',
+			'manage_options',
+			'cmlc-settings',
+			array( $this, 'render_page' ),
+			'dashicons-email',
+			56
+		);
+
+		add_submenu_page(
+			'cmlc-settings',
+			'Settings',
+			'Settings',
 			'manage_options',
 			'cmlc-settings',
 			array( $this, 'render_page' )
@@ -143,7 +154,9 @@ class CMLC_Settings {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'coppermont-lead-capture' ) );
 		}
 
-		$settings = self::get();
+		$settings                     = self::get();
+		$derived_submission_count     = CMLC_Leads::count_leads();
+		$settings['analytics_submissions'] = $derived_submission_count;
 		?>
 		<div class="wrap">
 			<h1>Coppermont Lead Capture</h1>
@@ -174,7 +187,7 @@ class CMLC_Settings {
 			</form>
 			<h2>Analytics</h2>
 			<p><strong>Infobar Shows:</strong> <?php echo esc_html( (string) $settings['analytics_impressions'] ); ?></p>
-			<p><strong>Email Submissions:</strong> <?php echo esc_html( (string) $settings['analytics_submissions'] ); ?></p>
+			<p><strong>Email Submissions:</strong> <?php echo esc_html( (string) $derived_submission_count ); ?></p>
 		</div>
 		<?php
 	}

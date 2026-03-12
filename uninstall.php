@@ -10,3 +10,7 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 }
 
 delete_option( 'cmlc_settings' );
+
+global $wpdb;
+
+$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}cmlc_leads" );
