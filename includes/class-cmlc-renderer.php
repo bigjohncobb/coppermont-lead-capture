@@ -43,6 +43,7 @@ class CMLC_Renderer {
 				'maxViews'              => (int) $settings['max_views'],
 				'enableExitIntent'      => ! empty( $settings['enable_exit_intent'] ),
 				'enableMobile'          => ! empty( $settings['enable_mobile'] ),
+				'enableCaptcha'         => ! empty( $settings['enable_captcha_validation'] ),
 			)
 		);
 	}

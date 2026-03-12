@@ -14,6 +14,9 @@
 	</div>
 	<form class="cmlc-form" data-cmlc-form>
 		<input type="email" name="email" required placeholder="Email address" aria-label="Email address">
+		<input type="text" name="cmlc_website" class="cmlc-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+		<input type="hidden" name="cmlc_form_token" value="<?php echo esc_attr( CMLC_Ajax::create_form_timestamp_token() ); ?>">
+		<input type="hidden" name="captcha_token" value="">
 		<button type="submit"><?php echo esc_html( $settings['button_text'] ); ?></button>
 	</form>
 	<p class="cmlc-status" data-cmlc-status aria-live="polite"></p>

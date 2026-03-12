@@ -51,6 +51,7 @@ class CMLC_Settings {
 			'schedule_end'               => '',
 			'analytics_impressions'      => 0,
 			'analytics_submissions'      => 0,
+			'enable_captcha_validation'  => 0,
 		);
 	}
 
@@ -160,6 +161,7 @@ class CMLC_Settings {
 		$settings['headline']    = isset( $raw['headline'] ) ? sanitize_text_field( $raw['headline'] ) : $settings['headline'];
 		$settings['body']        = isset( $raw['body'] ) ? sanitize_text_field( $raw['body'] ) : $settings['body'];
 		$settings['button_text'] = isset( $raw['button_text'] ) ? sanitize_text_field( $raw['button_text'] ) : $settings['button_text'];
+		$settings['enable_captcha_validation'] = empty( $raw['enable_captcha_validation'] ) ? 0 : 1;
 
 		if ( empty( $settings['headline'] ) ) {
 			add_settings_error( 'cmlc_settings', 'cmlc_headline_required', __( 'Headline is required.', 'coppermont-lead-capture' ), 'error' );
@@ -298,6 +300,7 @@ class CMLC_Settings {
 							<tr><th scope="row">Headline</th><td><input class="regular-text" name="cmlc_settings[headline]" value="<?php echo esc_attr( $settings['headline'] ); ?>"></td></tr>
 							<tr><th scope="row">Body</th><td><input class="regular-text" name="cmlc_settings[body]" value="<?php echo esc_attr( $settings['body'] ); ?>"></td></tr>
 							<tr><th scope="row">Button Text</th><td><input name="cmlc_settings[button_text]" value="<?php echo esc_attr( $settings['button_text'] ); ?>"></td></tr>
+							<tr><th scope="row">Enable CAPTCHA Validation</th><td><input type="checkbox" name="cmlc_settings[enable_captcha_validation]" value="1" <?php checked( 1, $settings['enable_captcha_validation'] ); ?>><p class="description">Uses the cmlc_validate_captcha filter for reCAPTCHA/hCaptcha providers.</p></td></tr>
 						<?php elseif ( 'design' === $active_tab ) : ?>
 							<tr><th scope="row">Background Color</th><td><input type="color" name="cmlc_settings[bg_color]" value="<?php echo esc_attr( $settings['bg_color'] ); ?>"></td></tr>
 							<tr><th scope="row">Text Color</th><td><input type="color" name="cmlc_settings[text_color]" value="<?php echo esc_attr( $settings['text_color'] ); ?>"></td></tr>
