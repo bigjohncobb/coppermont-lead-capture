@@ -29,5 +29,12 @@ Optional attributes:
 - User inputs are sanitized before saving.
 - Admin settings are protected by `manage_options` capability checks.
 
+== Data Management ==
+Under **Lead Capture > Data Management**, administrators with `manage_options` can:
+- Reset analytics only (keeps all other settings).
+- Delete all plugin data (irreversible) after entering the exact confirmation phrase `DELETE ALL PLUGIN DATA`.
+
+Both actions are nonce-protected and display admin notices after completion.
+
 == Uninstall ==
-On uninstall, plugin settings are removed via `uninstall.php`.
+On uninstall, the plugin uses the same centralized data manager logic to delete all plugin data.
