@@ -16,11 +16,28 @@ class CMLC_Settings {
 	const OPTION_KEY = 'cmlc_settings';
 
 	/**
+	 * Notice query key.
+	 *
+	 * @var string
+	 */
+	const NOTICE_QUERY_KEY = 'cmlc_notice';
+
+	/**
+	 * Confirmation phrase for destructive deletion.
+	 *
+	 * @var string
+	 */
+	const DELETE_CONFIRMATION_PHRASE = 'DELETE ALL PLUGIN DATA';
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
 		add_action( 'admin_init', array( $this, 'handle_tab_save' ) );
 		add_action( 'wp_dashboard_setup', array( $this, 'register_dashboard_widget' ) );
+		add_action( 'admin_notices', array( $this, 'render_admin_notice' ) );
+		add_action( 'admin_post_cmlc_reset_analytics', array( $this, 'handle_reset_analytics' ) );
+		add_action( 'admin_post_cmlc_delete_all_data', array( $this, 'handle_delete_all_data' ) );
 	}
 
 	/**
@@ -475,5 +492,156 @@ class CMLC_Settings {
 			echo '</tr>';
 		}
 		echo '</tbody></table>';
+	}
+
+	/**
+	 * Adds data management submenu page under the Lead Capture menu.
+	 *
+	 * @return void
+	 */
+	public function add_data_management_page() {
+		add_submenu_page(
+			'cmlc-dashboard',
+			'Lead Capture Data Management',
+			'Data Management',
+			'manage_options',
+			'cmlc-data-management',
+			array( $this, 'render_data_management_page' )
+		);
+	}
+
+	/**
+	 * Renders data management page.
+	 *
+	 * @return void
+	 */
+	public function render_data_management_page() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You do not have permission to access this page.', 'coppermont-lead-capture' ) );
+		}
+		?>
+		<div class="wrap">
+			<h1>Lead Capture Data Management</h1>
+			<p>Use these controls only when you explicitly want to remove analytics or plugin data.</p>
+
+			<h2>Reset Analytics Only</h2>
+			<p>This action keeps your plugin settings and only resets analytics counters to zero.</p>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="cmlc_reset_analytics">
+				<?php wp_nonce_field( 'cmlc_reset_analytics_action', 'cmlc_reset_analytics_nonce' ); ?>
+				<?php submit_button( 'Reset analytics only', 'secondary', 'submit', false ); ?>
+			</form>
+
+			<hr>
+
+			<h2>Delete All Plugin Data (Irreversible)</h2>
+			<p>This permanently removes plugin settings and analytics data. This cannot be undone.</p>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="cmlc_delete_all_data">
+				<?php wp_nonce_field( 'cmlc_delete_all_data_action', 'cmlc_delete_all_data_nonce' ); ?>
+				<p>
+					<label for="cmlc-delete-confirmation"><strong>Type <?php echo esc_html( self::DELETE_CONFIRMATION_PHRASE ); ?> to confirm:</strong></label>
+					<br>
+					<input id="cmlc-delete-confirmation" class="regular-text" type="text" name="cmlc_delete_confirmation" value="" autocomplete="off" required>
+				</p>
+				<?php submit_button( 'Delete all plugin data (irreversible)', 'delete', 'submit', false ); ?>
+			</form>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Handles analytics reset.
+	 *
+	 * @return void
+	 */
+	public function handle_reset_analytics() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You do not have permission to perform this action.', 'coppermont-lead-capture' ) );
+		}
+
+		check_admin_referer( 'cmlc_reset_analytics_action', 'cmlc_reset_analytics_nonce' );
+
+		$result = CMLC_Data_Manager::reset_analytics_only();
+		$notice = true === $result ? 'analytics_reset_success' : 'analytics_reset_failed';
+
+		$this->redirect_to_data_management( $notice );
+	}
+
+	/**
+	 * Handles full data deletion.
+	 *
+	 * @return void
+	 */
+	public function handle_delete_all_data() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You do not have permission to perform this action.', 'coppermont-lead-capture' ) );
+		}
+
+		check_admin_referer( 'cmlc_delete_all_data_action', 'cmlc_delete_all_data_nonce' );
+
+		$confirmation = isset( $_POST['cmlc_delete_confirmation'] ) ? sanitize_text_field( wp_unslash( $_POST['cmlc_delete_confirmation'] ) ) : '';
+		if ( self::DELETE_CONFIRMATION_PHRASE !== $confirmation ) {
+			$this->redirect_to_data_management( 'delete_confirmation_mismatch' );
+		}
+
+		$result = CMLC_Data_Manager::delete_all_plugin_data();
+		$notice = true === $result ? 'data_delete_success' : 'data_delete_failed';
+
+		$this->redirect_to_data_management( $notice );
+	}
+
+	/**
+	 * Redirects back to data management page with notice query arg.
+	 *
+	 * @param string $notice Notice code.
+	 * @return void
+	 */
+	private function redirect_to_data_management( $notice ) {
+		$url = add_query_arg(
+			array(
+				'page'                   => 'cmlc-data-management',
+				self::NOTICE_QUERY_KEY   => $notice,
+			),
+			admin_url( 'admin.php' )
+		);
+
+		wp_safe_redirect( $url );
+		exit;
+	}
+
+	/**
+	 * Renders admin notice for completed data management actions.
+	 *
+	 * @return void
+	 */
+	public function render_admin_notice() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		if ( ! isset( $_GET['page'] ) || 'cmlc-data-management' !== sanitize_text_field( wp_unslash( $_GET['page'] ) ) ) {
+			return;
+		}
+
+		$notice = isset( $_GET[ self::NOTICE_QUERY_KEY ] ) ? sanitize_key( wp_unslash( $_GET[ self::NOTICE_QUERY_KEY ] ) ) : '';
+		if ( empty( $notice ) ) {
+			return;
+		}
+
+		$notices = array(
+			'analytics_reset_success'      => array( 'success', 'Analytics counters were reset successfully.' ),
+			'analytics_reset_failed'       => array( 'error', 'Analytics counters could not be reset. No data was deleted.' ),
+			'data_delete_success'          => array( 'success', 'All plugin data was deleted successfully.' ),
+			'data_delete_failed'           => array( 'error', 'Plugin data deletion failed. Please verify database permissions and try again.' ),
+			'delete_confirmation_mismatch' => array( 'warning', 'Confirmation phrase did not match. No data was deleted.' ),
+		);
+
+		if ( ! isset( $notices[ $notice ] ) ) {
+			return;
+		}
+
+		list( $type, $message ) = $notices[ $notice ];
+		echo '<div class="notice notice-' . esc_attr( $type ) . ' is-dismissible"><p>' . esc_html( $message ) . '</p></div>';
 	}
 }

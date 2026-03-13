@@ -18,6 +18,7 @@ require_once CMLC_PATH . 'includes/admin/pages/class-cmlc-admin-page-settings.ph
 require_once CMLC_PATH . 'includes/class-cmlc-campaigns.php';
 require_once CMLC_PATH . 'includes/class-cmlc-leads.php';
 require_once CMLC_PATH . 'includes/class-cmlc-leads-admin.php';
+require_once CMLC_PATH . 'includes/class-cmlc-data-manager.php';
 require_once CMLC_PATH . 'includes/class-cmlc-shortcodes.php';
 require_once CMLC_PATH . 'includes/class-cmlc-renderer.php';
 require_once CMLC_PATH . 'includes/class-cmlc-ajax.php';

@@ -9,13 +9,8 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;
 }
 
-global $wpdb;
+$plugin_path = plugin_dir_path( __FILE__ );
 
-$table_name = $wpdb->prefix . 'cmlc_events';
-$wpdb->query( "DROP TABLE IF EXISTS {$table_name}" );
+require_once $plugin_path . 'includes/class-cmlc-data-manager.php';
 
-$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}cmlc_leads" );
-
-delete_option( 'cmlc_settings' );
-delete_option( 'cmlc_analytics_seeded' );
-delete_option( 'cmlc_analytics_legacy_offsets' );
+CMLC_Data_Manager::delete_all_plugin_data();

@@ -46,7 +46,7 @@ Optional attributes:
 - Honeypot field remains active as a secondary anti-spam measure.
 
 == Uninstall ==
-On uninstall, plugin settings are removed via `uninstall.php`.
+On uninstall, the plugin uses the same centralized data manager logic to delete all plugin data.
 
 
 == Admin Navigation ==
