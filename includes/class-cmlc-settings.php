@@ -19,7 +19,6 @@ class CMLC_Settings {
 	 * Constructor.
 	 */
 	public function __construct() {
-		add_action( 'admin_menu', array( $this, 'add_settings_page' ) );
 		add_action( 'admin_init', array( $this, 'handle_tab_save' ) );
 	}
 
@@ -59,21 +58,6 @@ class CMLC_Settings {
 			'turnstile_site_key'         => '',
 			'turnstile_secret_key'       => '',
 			'turnstile_strict_mode'      => 1,
-		);
-	}
-
-	/**
-	 * Adds settings page.
-	 *
-	 * @return void
-	 */
-	public function add_settings_page() {
-		add_options_page(
-			'Coppermont Lead Capture',
-			'Lead Capture',
-			'manage_options',
-			'cmlc-settings',
-			array( $this, 'render_page' )
 		);
 	}
 
@@ -131,7 +115,7 @@ class CMLC_Settings {
 				'page' => 'cmlc-settings',
 				'tab'  => $tab,
 			),
-			admin_url( 'options-general.php' )
+			admin_url( 'admin.php' )
 		);
 
 		set_transient( 'settings_errors', get_settings_errors(), 30 );
@@ -320,57 +304,6 @@ class CMLC_Settings {
 	}
 
 	/**
-	 * Sanitizes a design dimension that supports px, %, and vw units.
-	 *
-	 * @param mixed                $value  Raw value.
-	 * @param string               $default Default fallback.
-	 * @param array<string,array> $limits Value boundaries keyed by unit.
-	 * @return string
-	 */
-	private function sanitize_design_dimension( $value, $default, $limits ) {
-		$raw = strtolower( trim( (string) $value ) );
-
-		if ( ! preg_match( '/^(\d+(?:\.\d+)?)(px|%|vw)$/', $raw, $matches ) ) {
-			return $default;
-		}
-
-		$number = (float) $matches[1];
-		$unit   = $matches[2];
-
-		if ( ! isset( $limits[ $unit ] ) || ! is_array( $limits[ $unit ] ) ) {
-			return $default;
-		}
-
-		$min = (float) $limits[ $unit ][0];
-		$max = (float) $limits[ $unit ][1];
-		if ( $min > $max ) {
-			return $default;
-		}
-
-		$number = max( $min, min( $max, $number ) );
-		$number = ( floor( $number ) === $number ) ? (string) (int) $number : rtrim( rtrim( sprintf( '%.2f', $number ), '0' ), '.' );
-
-		return $number . $unit;
-	}
-
-	/**
-	 * Sanitizes opacity between 0 and 1.
-	 *
-	 * @param mixed $value Raw value.
-	 * @param float $default Default fallback.
-	 * @return float
-	 */
-	private function sanitize_opacity( $value, $default ) {
-		if ( ! is_numeric( $value ) ) {
-			return $default;
-		}
-
-		$opacity = (float) $value;
-
-		return max( 0, min( 1, $opacity ) );
-	}
-
-	/**
 	 * Retrieves settings merged with defaults.
 	 *
 	 * @return array<string,mixed>
@@ -405,7 +338,7 @@ class CMLC_Settings {
 			<h2 class="nav-tab-wrapper">
 				<?php foreach ( $tabs as $tab_key => $tab_label ) : ?>
 					<?php $tab_class = ( $active_tab === $tab_key ) ? 'nav-tab nav-tab-active' : 'nav-tab'; ?>
-					<a class="<?php echo esc_attr( $tab_class ); ?>" href="<?php echo esc_url( add_query_arg( array( 'page' => 'cmlc-settings', 'tab' => $tab_key ), admin_url( 'options-general.php' ) ) ); ?>"><?php echo esc_html( $tab_label ); ?></a>
+					<a class="<?php echo esc_attr( $tab_class ); ?>" href="<?php echo esc_url( add_query_arg( array( 'page' => 'cmlc-settings', 'tab' => $tab_key ), admin_url( 'admin.php' ) ) ); ?>"><?php echo esc_html( $tab_label ); ?></a>
 				<?php endforeach; ?>
 			</h2>
 
@@ -421,7 +354,7 @@ class CMLC_Settings {
 					<p><?php esc_html_e( 'Lead records are managed in your integrations or custom storage layer.', 'coppermont-lead-capture' ); ?></p>
 				<?php endif; ?>
 			<?php else : ?>
-				<form method="post" action="<?php echo esc_url( add_query_arg( array( 'page' => 'cmlc-settings' ), admin_url( 'options-general.php' ) ) ); ?>">
+				<form method="post" action="<?php echo esc_url( add_query_arg( array( 'page' => 'cmlc-settings' ), admin_url( 'admin.php' ) ) ); ?>">
 					<input type="hidden" name="cmlc_tab_action" value="1">
 					<input type="hidden" name="cmlc_tab" value="<?php echo esc_attr( $active_tab ); ?>">
 					<?php wp_nonce_field( 'cmlc_save_' . $active_tab, 'cmlc_nonce' ); ?>

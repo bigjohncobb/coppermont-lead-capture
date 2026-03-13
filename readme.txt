@@ -47,3 +47,12 @@ Optional attributes:
 
 == Uninstall ==
 On uninstall, plugin settings are removed via `uninstall.php`.
+
+
+== Admin Navigation ==
+After activation, manage the plugin from the top-level **Lead Capture** menu:
+- Dashboard
+- Campaigns
+- Leads
+- Analytics
+- Settings

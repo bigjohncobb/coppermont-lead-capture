@@ -8,6 +8,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 require_once CMLC_PATH . 'includes/class-cmlc-settings.php';
+require_once CMLC_PATH . 'includes/admin/class-cmlc-admin-page.php';
+require_once CMLC_PATH . 'includes/admin/class-cmlc-admin.php';
+require_once CMLC_PATH . 'includes/admin/pages/class-cmlc-admin-page-dashboard.php';
+require_once CMLC_PATH . 'includes/admin/pages/class-cmlc-admin-page-campaigns.php';
+require_once CMLC_PATH . 'includes/admin/pages/class-cmlc-admin-page-leads.php';
+require_once CMLC_PATH . 'includes/admin/pages/class-cmlc-admin-page-analytics.php';
+require_once CMLC_PATH . 'includes/admin/pages/class-cmlc-admin-page-settings.php';
 require_once CMLC_PATH . 'includes/class-cmlc-shortcodes.php';
 require_once CMLC_PATH . 'includes/class-cmlc-renderer.php';
 require_once CMLC_PATH . 'includes/class-cmlc-ajax.php';
@@ -69,6 +76,15 @@ class CMLC_Plugin {
 	 */
 	public function bootstrap() {
 		new CMLC_Settings();
+		new CMLC_Admin(
+			array(
+				new CMLC_Admin_Page_Dashboard(),
+				new CMLC_Admin_Page_Campaigns(),
+				new CMLC_Admin_Page_Leads(),
+				new CMLC_Admin_Page_Analytics(),
+				new CMLC_Admin_Page_Settings(),
+			)
+		);
 		new CMLC_Shortcodes();
 		new CMLC_Renderer();
 		new CMLC_Ajax();
