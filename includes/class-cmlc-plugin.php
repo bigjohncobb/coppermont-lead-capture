@@ -16,6 +16,8 @@ require_once CMLC_PATH . 'includes/admin/pages/class-cmlc-admin-page-leads.php';
 require_once CMLC_PATH . 'includes/admin/pages/class-cmlc-admin-page-analytics.php';
 require_once CMLC_PATH . 'includes/admin/pages/class-cmlc-admin-page-settings.php';
 require_once CMLC_PATH . 'includes/class-cmlc-campaigns.php';
+require_once CMLC_PATH . 'includes/class-cmlc-leads.php';
+require_once CMLC_PATH . 'includes/class-cmlc-leads-admin.php';
 require_once CMLC_PATH . 'includes/class-cmlc-shortcodes.php';
 require_once CMLC_PATH . 'includes/class-cmlc-renderer.php';
 require_once CMLC_PATH . 'includes/class-cmlc-ajax.php';
@@ -63,6 +65,7 @@ class CMLC_Plugin {
 
 		CMLC_Analytics::install_schema();
 		CMLC_Analytics::schedule_cleanup();
+		CMLC_Leads::maybe_create_table();
 
 		( new CMLC_Campaigns() )->register_post_type();
 		self::migrate_global_settings_to_default_campaign();
@@ -87,6 +90,7 @@ class CMLC_Plugin {
 	 */
 	public function bootstrap() {
 		self::maybe_run_migration();
+		CMLC_Leads::maybe_create_table();
 		new CMLC_Settings();
 		new CMLC_Admin(
 			array(
@@ -98,6 +102,7 @@ class CMLC_Plugin {
 			)
 		);
 		new CMLC_Campaigns();
+		new CMLC_Leads_Admin();
 		new CMLC_Shortcodes();
 		new CMLC_Renderer();
 		new CMLC_Ajax();

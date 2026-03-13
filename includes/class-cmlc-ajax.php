@@ -145,19 +145,7 @@ class CMLC_Ajax {
 
 		$resolved_campaign_id = (int) $campaign['id'];
 
-		CMLC_Analytics::record_event(
-			'submission',
-			array(
-				'page_id'       => $page_id,
-				'campaign_id'   => $resolved_campaign_id,
-				'referrer_host' => $referrer_host,
-			)
-		);
-
-		CMLC_Analytics::record_lead( $resolved_campaign_id, $email );
-
-		// Legacy counters are retained for backward compatibility.
-		$settings                          = CMLC_Settings::get();
+		$settings = CMLC_Settings::get();
 
 		if ( ! empty( $settings['enable_captcha_validation'] ) && ! $this->passes_captcha_validation( $settings ) ) {
 			wp_send_json_error( array( 'message' => self::BOT_FAILURE_MESSAGE ), 400 );
@@ -180,6 +168,29 @@ class CMLC_Ajax {
 			}
 		}
 
+		CMLC_Analytics::record_event(
+			'submission',
+			array(
+				'page_id'       => $page_id,
+				'campaign_id'   => $resolved_campaign_id,
+				'referrer_host' => $referrer_host,
+			)
+		);
+
+		CMLC_Analytics::record_lead( $resolved_campaign_id, $email );
+
+		// Also persist in dedicated leads table with enriched metadata.
+		$source      = isset( $_POST['source'] ) ? sanitize_text_field( wp_unslash( $_POST['source'] ) ) : 'infobar';
+		$metadata    = array(
+			'page_url'   => isset( $_POST['page_url'] ) ? esc_url_raw( wp_unslash( $_POST['page_url'] ) ) : '',
+			'user_agent' => isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '',
+			'ip'         => $ip_address,
+			'page_id'    => $page_id,
+		);
+
+		CMLC_Leads::insert_lead( $email, $source, (string) $resolved_campaign_id, $metadata );
+
+		// Legacy counters are retained for backward compatibility.
 		$settings['analytics_submissions'] = absint( $settings['analytics_submissions'] ) + 1;
 		update_option( CMLC_Settings::OPTION_KEY, $settings );
 

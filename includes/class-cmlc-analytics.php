@@ -92,12 +92,14 @@ class CMLC_Analytics {
 		$leads_table = self::leads_table_name();
 		$leads_sql = "CREATE TABLE {$leads_table} (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-			campaign_id bigint(20) unsigned NOT NULL,
 			email varchar(190) NOT NULL,
-			created_at datetime NOT NULL,
+			source varchar(100) NOT NULL DEFAULT '',
+			campaign_id varchar(100) NOT NULL DEFAULT '',
+			metadata longtext NULL,
+			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY  (id),
-			KEY campaign_id (campaign_id),
-			KEY email (email)
+			KEY email (email),
+			KEY created_at (created_at)
 		) {$charset_collate};";
 
 		dbDelta( $leads_sql );
@@ -193,11 +195,12 @@ class CMLC_Analytics {
 		$wpdb->insert(
 			self::leads_table_name(),
 			array(
-				'campaign_id' => absint( $campaign_id ),
+				'campaign_id' => sanitize_text_field( (string) $campaign_id ),
 				'email'       => sanitize_email( $email ),
+				'source'      => 'analytics',
 				'created_at'  => current_time( 'mysql' ),
 			),
-			array( '%d', '%s', '%s' )
+			array( '%s', '%s', '%s', '%s' )
 		);
 
 		return (int) $wpdb->insert_id;

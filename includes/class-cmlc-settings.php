@@ -370,7 +370,8 @@ class CMLC_Settings {
 					<?php $this->render_campaign_performance(); ?>
 				<?php else : ?>
 					<h2><?php esc_html_e( 'Leads', 'coppermont-lead-capture' ); ?></h2>
-					<p><?php esc_html_e( 'Lead records are managed in your integrations or custom storage layer.', 'coppermont-lead-capture' ); ?></p>
+					<p><strong><?php esc_html_e( 'Total leads:', 'coppermont-lead-capture' ); ?></strong> <?php echo esc_html( (string) CMLC_Leads::count_leads() ); ?></p>
+					<p class="description"><?php esc_html_e( 'Manage leads from the dedicated Leads page in the Lead Capture menu.', 'coppermont-lead-capture' ); ?></p>
 				<?php endif; ?>
 			<?php else : ?>
 				<form method="post" action="<?php echo esc_url( add_query_arg( array( 'page' => 'cmlc-settings' ), admin_url( 'admin.php' ) ) ); ?>">
