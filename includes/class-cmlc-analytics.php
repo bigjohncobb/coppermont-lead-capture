@@ -345,8 +345,34 @@ class CMLC_Analytics {
 			)
 		);
 
-		$rows        = array();
+		$rows         = array();
 		$events_table = self::table_name();
+		$campaign_ids = wp_list_pluck( $campaigns, 'ID' );
+		$event_counts = array();
+
+		if ( ! empty( $campaign_ids ) ) {
+			$campaign_ids = array_map( 'absint', $campaign_ids );
+			$placeholders = implode( ',', array_fill( 0, count( $campaign_ids ), '%d' ) );
+			$sql          = $wpdb->prepare(
+				"SELECT campaign_id, event_type, COUNT(*) AS event_count FROM {$events_table} WHERE campaign_id IN ({$placeholders}) GROUP BY campaign_id, event_type",
+				$campaign_ids
+			);
+
+			$counts = $wpdb->get_results( $sql, ARRAY_A );
+			foreach ( $counts as $count ) {
+				$campaign_id = isset( $count['campaign_id'] ) ? absint( $count['campaign_id'] ) : 0;
+				$event_type  = isset( $count['event_type'] ) ? sanitize_key( (string) $count['event_type'] ) : '';
+				if ( empty( $campaign_id ) || empty( $event_type ) ) {
+					continue;
+				}
+
+				if ( empty( $event_counts[ $campaign_id ] ) ) {
+					$event_counts[ $campaign_id ] = array();
+				}
+
+				$event_counts[ $campaign_id ][ $event_type ] = isset( $count['event_count'] ) ? absint( $count['event_count'] ) : 0;
+			}
+		}
 
 		foreach ( $campaigns as $campaign_post ) {
 			$campaign = CMLC_Campaigns::get_campaign( $campaign_post->ID );
@@ -354,24 +380,11 @@ class CMLC_Analytics {
 				continue;
 			}
 			$campaign_id = (int) $campaign_post->ID;
-			$counts      = $wpdb->get_results(
-				$wpdb->prepare(
-					"SELECT event_type, COUNT(*) AS event_count FROM {$events_table} WHERE campaign_id = %d GROUP BY event_type",
-					$campaign_id
-				),
-				ARRAY_A
-			);
 
 			$impressions = (int) $campaign['baseline_impressions'];
 			$submissions = (int) $campaign['baseline_submissions'];
-			foreach ( $counts as $count ) {
-				if ( 'impression' === $count['event_type'] ) {
-					$impressions += (int) $count['event_count'];
-				}
-				if ( 'submission' === $count['event_type'] ) {
-					$submissions += (int) $count['event_count'];
-				}
-			}
+			$impressions += isset( $event_counts[ $campaign_id ]['impression'] ) ? absint( $event_counts[ $campaign_id ]['impression'] ) : 0;
+			$submissions += isset( $event_counts[ $campaign_id ]['submission'] ) ? absint( $event_counts[ $campaign_id ]['submission'] ) : 0;
 
 			$rows[] = array(
 				'campaign_id' => $campaign_id,

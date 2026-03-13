@@ -329,7 +329,7 @@ class CMLC_Ajax {
 				'body'    => array(
 					'secret'   => $secret,
 					'response' => $token,
-					'remoteip' => isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '',
+					'remoteip' => $this->get_client_ip(),
 				),
 			)
 		);
@@ -540,6 +540,9 @@ class CMLC_Ajax {
 	 */
 	private function get_client_ip() {
 		$ip = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+		if ( empty( $ip ) || ! filter_var( $ip, FILTER_VALIDATE_IP ) ) {
+			$ip = 'unknown';
+		}
 
 		/**
 		 * Filters detected client IP for reverse proxy setups.
