@@ -320,6 +320,57 @@ class CMLC_Settings {
 	}
 
 	/**
+	 * Sanitizes a design dimension that supports px, %, and vw units.
+	 *
+	 * @param mixed                $value  Raw value.
+	 * @param string               $default Default fallback.
+	 * @param array<string,array> $limits Value boundaries keyed by unit.
+	 * @return string
+	 */
+	private function sanitize_design_dimension( $value, $default, $limits ) {
+		$raw = strtolower( trim( (string) $value ) );
+
+		if ( ! preg_match( '/^(\d+(?:\.\d+)?)(px|%|vw)$/', $raw, $matches ) ) {
+			return $default;
+		}
+
+		$number = (float) $matches[1];
+		$unit   = $matches[2];
+
+		if ( ! isset( $limits[ $unit ] ) || ! is_array( $limits[ $unit ] ) ) {
+			return $default;
+		}
+
+		$min = (float) $limits[ $unit ][0];
+		$max = (float) $limits[ $unit ][1];
+		if ( $min > $max ) {
+			return $default;
+		}
+
+		$number = max( $min, min( $max, $number ) );
+		$number = ( floor( $number ) === $number ) ? (string) (int) $number : rtrim( rtrim( sprintf( '%.2f', $number ), '0' ), '.' );
+
+		return $number . $unit;
+	}
+
+	/**
+	 * Sanitizes opacity between 0 and 1.
+	 *
+	 * @param mixed $value Raw value.
+	 * @param float $default Default fallback.
+	 * @return float
+	 */
+	private function sanitize_opacity( $value, $default ) {
+		if ( ! is_numeric( $value ) ) {
+			return $default;
+		}
+
+		$opacity = (float) $value;
+
+		return max( 0, min( 1, $opacity ) );
+	}
+
+	/**
 	 * Retrieves settings merged with defaults.
 	 *
 	 * @return array<string,mixed>

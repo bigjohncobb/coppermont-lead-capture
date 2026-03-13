@@ -68,15 +68,47 @@ class CMLC_Renderer {
 			return;
 		}
 
+		$opacity = isset( $settings['bar_opacity'] ) ? (float) $settings['bar_opacity'] : 1;
+		$opacity = max( 0, min( 1, $opacity ) );
+		$bg_rgb  = $this->hex_to_rgb_string( (string) $settings['bg_color'] );
+
 		$style = sprintf(
-			'--cmlc-bg:%1$s;--cmlc-text:%2$s;--cmlc-btn:%3$s;--cmlc-btn-text:%4$s;',
+			'--cmlc-bg:%1$s;--cmlc-bg-rgb:%2$s;--cmlc-opacity:%3$s;--cmlc-text:%4$s;--cmlc-btn:%5$s;--cmlc-btn-text:%6$s;--cmlc-width:%7$s;--cmlc-height:%8$s;',
 			esc_attr( $settings['bg_color'] ),
+			esc_attr( $bg_rgb ),
+			esc_attr( (string) $opacity ),
 			esc_attr( $settings['text_color'] ),
 			esc_attr( $settings['button_color'] ),
-			esc_attr( $settings['button_text_color'] )
+			esc_attr( $settings['button_text_color'] ),
+			esc_attr( (string) $settings['bar_width'] ),
+			esc_attr( (string) $settings['bar_height'] )
 		);
 
 		include CMLC_PATH . 'templates/infobar.php';
+	}
+
+	/**
+	 * Converts a hex color to an RGB string.
+	 *
+	 * @param string $hex Hex color value.
+	 * @return string
+	 */
+	private function hex_to_rgb_string( $hex ) {
+		$color = sanitize_hex_color( $hex );
+		if ( empty( $color ) ) {
+			return '31, 41, 55';
+		}
+
+		$color = ltrim( $color, '#' );
+		if ( 3 === strlen( $color ) ) {
+			$color = $color[0] . $color[0] . $color[1] . $color[1] . $color[2] . $color[2];
+		}
+
+		$red   = hexdec( substr( $color, 0, 2 ) );
+		$green = hexdec( substr( $color, 2, 2 ) );
+		$blue  = hexdec( substr( $color, 4, 2 ) );
+
+		return sprintf( '%d, %d, %d', $red, $green, $blue );
 	}
 
 	/**
