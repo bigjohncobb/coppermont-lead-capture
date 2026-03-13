@@ -92,6 +92,8 @@ class CMLC_Settings {
 			'analytics_suspected_bot_traffic' => 0,
 			'analytics_daily_suspected_bot' => 0,
 			'analytics_daily_last_rollover_date' => '',
+			'forms_bridge_enabled'               => 0,
+			'forms_bridge_form_ids'              => '',
 		);
 	}
 
@@ -194,6 +196,9 @@ class CMLC_Settings {
 
 		$settings['analytics_retention_days'] = isset( $raw['analytics_retention_days'] ) ? absint( $raw['analytics_retention_days'] ) : $settings['analytics_retention_days'];
 		$settings['analytics_retention_days'] = in_array( $settings['analytics_retention_days'], array( 90, 180, 365 ), true ) ? $settings['analytics_retention_days'] : 180;
+
+		$settings['forms_bridge_enabled']  = empty( $raw['forms_bridge_enabled'] ) ? 0 : 1;
+		$settings['forms_bridge_form_ids'] = isset( $raw['forms_bridge_form_ids'] ) ? sanitize_text_field( $raw['forms_bridge_form_ids'] ) : $settings['forms_bridge_form_ids'];
 
 		if ( empty( $settings['headline'] ) ) {
 			add_settings_error( 'cmlc_settings', 'cmlc_headline_required', __( 'Headline is required.', 'coppermont-lead-capture' ), 'error' );
@@ -448,6 +453,26 @@ class CMLC_Settings {
 								</td>
 							</tr>
 							<tr><th scope="row">Analytics Retention</th><td><select name="cmlc_settings[analytics_retention_days]"><option value="90" <?php selected( 90, (int) $settings['analytics_retention_days'] ); ?>>90 days</option><option value="180" <?php selected( 180, (int) $settings['analytics_retention_days'] ); ?>>180 days</option><option value="365" <?php selected( 365, (int) $settings['analytics_retention_days'] ); ?>>365 days</option></select></td></tr>
+							<tr><td colspan="2" style="padding: 0;"><hr style="margin: 8px 0;"></td></tr>
+							<tr><td colspan="2" style="padding: 4px 10px 0;"><strong><?php esc_html_e( 'Coppermont Forms Integration', 'coppermont-lead-capture' ); ?></strong>
+								<?php if ( ! is_plugin_active( 'coppermont-forms/coppermont-forms.php' ) ) : ?>
+									<br><span style="color: #6b7280; font-weight: normal;">Coppermont Forms plugin is not active. Install and activate it to use this feature.</span>
+								<?php endif; ?>
+							</td></tr>
+							<tr>
+								<th scope="row">Capture Form Emails as Leads</th>
+								<td>
+									<input type="checkbox" name="cmlc_settings[forms_bridge_enabled]" value="1" <?php checked( 1, $settings['forms_bridge_enabled'] ); ?>>
+									<p class="description">When enabled, email addresses submitted through Coppermont Forms are automatically saved as leads.</p>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row">Limit to Form IDs</th>
+								<td>
+									<input class="regular-text" name="cmlc_settings[forms_bridge_form_ids]" value="<?php echo esc_attr( $settings['forms_bridge_form_ids'] ); ?>" placeholder="All forms">
+									<p class="description">Comma-separated form IDs. Leave blank to capture leads from all forms.</p>
+								</td>
+							</tr>
 						<?php elseif ( 'design' === $active_tab ) : ?>
 							<tr><th scope="row">Background Color</th><td><input type="color" name="cmlc_settings[bg_color]" value="<?php echo esc_attr( $settings['bg_color'] ); ?>"></td></tr>
 							<tr><th scope="row">Text Color</th><td><input type="color" name="cmlc_settings[text_color]" value="<?php echo esc_attr( $settings['text_color'] ); ?>"></td></tr>
