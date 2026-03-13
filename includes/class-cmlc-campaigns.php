@@ -68,6 +68,7 @@ class CMLC_Campaigns {
 		return array(
 			'status'                     => 'active',
 			'priority'                   => 100,
+			'display_mode'               => 'bottom_bar',
 			'headline'                   => 'Get weekly growth tips',
 			'body'                       => 'Join our email list for practical lead generation insights.',
 			'button_text'                => 'Subscribe',
@@ -234,6 +235,7 @@ class CMLC_Campaigns {
 		<table class="form-table" role="presentation">
 			<tr><th>Status</th><td><select name="cmlc_campaign[status]"><option value="active" <?php selected( 'active', $campaign['status'] ); ?>>Active</option><option value="inactive" <?php selected( 'inactive', $campaign['status'] ); ?>>Inactive</option></select></td></tr>
 			<tr><th>Priority</th><td><input type="number" name="cmlc_campaign[priority]" value="<?php echo esc_attr( $campaign['priority'] ); ?>"></td></tr>
+			<tr><th>Display Mode</th><td><select name="cmlc_campaign[display_mode]"><option value="bottom_bar" <?php selected( 'bottom_bar', $campaign['display_mode'] ); ?>>Bottom Bar</option><option value="top_bar" <?php selected( 'top_bar', $campaign['display_mode'] ); ?>>Top Bar</option><option value="lightbox" <?php selected( 'lightbox', $campaign['display_mode'] ); ?>>Lightbox Popup</option></select><p class="description">Bottom/top bar slides in from the edge. Lightbox shows a centered modal with overlay.</p></td></tr>
 			<tr><th>Headline</th><td><input class="regular-text" name="cmlc_campaign[headline]" value="<?php echo esc_attr( $campaign['headline'] ); ?>"></td></tr>
 			<tr><th>Body</th><td><input class="regular-text" name="cmlc_campaign[body]" value="<?php echo esc_attr( $campaign['body'] ); ?>"></td></tr>
 			<tr><th>Button Text</th><td><input name="cmlc_campaign[button_text]" value="<?php echo esc_attr( $campaign['button_text'] ); ?>"></td></tr>
@@ -291,6 +293,7 @@ class CMLC_Campaigns {
 
 		$output['status']                    = in_array( $output['status'], array( 'active', 'inactive' ), true ) ? $output['status'] : 'inactive';
 		$output['priority']                  = absint( $output['priority'] );
+		$output['display_mode']              = in_array( $output['display_mode'], array( 'bottom_bar', 'top_bar', 'lightbox' ), true ) ? $output['display_mode'] : 'bottom_bar';
 		$output['headline']                  = sanitize_text_field( $output['headline'] );
 		$output['body']                      = sanitize_text_field( $output['body'] );
 		$output['button_text']               = sanitize_text_field( $output['button_text'] );

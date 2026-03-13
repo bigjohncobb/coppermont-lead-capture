@@ -1,8 +1,11 @@
+/* ==========================================================================
+   Bottom Bar (default)
+   ========================================================================== */
+
 .cmlc-infobar {
   position: fixed;
   left: 16px;
   right: 16px;
-  bottom: 16px;
   z-index: 99999;
   width: min(var(--cmlc-width, 960px), calc(100vw - 32px));
   max-width: calc(100vw - 32px);
@@ -16,16 +19,36 @@
   border-radius: 12px;
   background: rgba(var(--cmlc-bg-rgb, 31, 41, 55), var(--cmlc-opacity, 0.95));
   color: var(--cmlc-text, #fff);
-  transform: translateY(130%);
   opacity: 0;
   transition: transform .35s ease, opacity .35s ease;
   box-shadow: 0 10px 30px rgba(0,0,0,.2);
 }
 
-.cmlc-infobar.is-visible {
+/* Bottom bar positioning */
+.cmlc-infobar[data-display-mode="bottom_bar"] {
+  bottom: 16px;
+  transform: translateY(130%);
+}
+
+.cmlc-infobar[data-display-mode="bottom_bar"].is-visible {
   transform: translateY(0);
   opacity: var(--cmlc-opacity, 1);
 }
+
+/* Top bar positioning */
+.cmlc-infobar[data-display-mode="top_bar"] {
+  top: 16px;
+  transform: translateY(-130%);
+}
+
+.cmlc-infobar[data-display-mode="top_bar"].is-visible {
+  transform: translateY(0);
+  opacity: var(--cmlc-opacity, 1);
+}
+
+/* ==========================================================================
+   Shared bar elements
+   ========================================================================== */
 
 .cmlc-close {
   position: absolute;
@@ -36,16 +59,20 @@
   color: inherit;
   font-size: 20px;
   cursor: pointer;
+  line-height: 1;
+  padding: 4px 6px;
 }
 
 .cmlc-form,
-.cmlc-shortcode-form {
+.cmlc-shortcode-form,
+.cmlc-lightbox-form {
   display: flex;
   gap: 8px;
 }
 
 .cmlc-form input,
-.cmlc-shortcode-form input {
+.cmlc-shortcode-form input,
+.cmlc-lightbox-form input {
   min-width: 220px;
   border: 1px solid rgba(255,255,255,.25);
   border-radius: 8px;
@@ -53,7 +80,8 @@
 }
 
 .cmlc-form button,
-.cmlc-shortcode-form button {
+.cmlc-shortcode-form button,
+.cmlc-lightbox-form button {
   border: 0;
   border-radius: 8px;
   padding: 10px 14px;
@@ -61,11 +89,12 @@
   background: var(--cmlc-btn, #f59e0b);
   color: var(--cmlc-btn-text, #111827);
   cursor: pointer;
+  white-space: nowrap;
 }
 
-
 .cmlc-form .cmlc-hp,
-.cmlc-shortcode-form .cmlc-hp {
+.cmlc-shortcode-form .cmlc-hp,
+.cmlc-lightbox-form .cmlc-hp {
   position: absolute;
   left: -9999px;
   width: 1px;
@@ -73,11 +102,118 @@
   opacity: 0;
   pointer-events: none;
 }
+
 .cmlc-status {
   grid-column: 1 / -1;
   margin: 0;
   font-size: 13px;
 }
+
+/* ==========================================================================
+   Lightbox
+   ========================================================================== */
+
+.cmlc-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99998;
+  background: rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .3s ease, visibility .3s ease;
+}
+
+.cmlc-overlay.is-visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.cmlc-lightbox {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 99999;
+  width: min(var(--cmlc-width, 520px), calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
+  transform: translate(-50%, -50%) scale(0.9);
+  opacity: 0;
+  visibility: hidden;
+  transition: transform .3s ease, opacity .3s ease, visibility .3s ease;
+  background: rgba(var(--cmlc-bg-rgb, 31, 41, 55), var(--cmlc-opacity, 0.98));
+  color: var(--cmlc-text, #fff);
+  border-radius: 16px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+  padding: 0;
+}
+
+.cmlc-lightbox.is-visible {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+  visibility: visible;
+}
+
+.cmlc-lightbox .cmlc-close {
+  top: 12px;
+  right: 14px;
+  font-size: 22px;
+  z-index: 1;
+}
+
+.cmlc-lightbox-inner {
+  padding: 40px 32px 32px;
+  text-align: center;
+}
+
+.cmlc-lightbox-inner .cmlc-headline {
+  font-size: 24px;
+  margin: 0 0 8px;
+  line-height: 1.3;
+}
+
+.cmlc-lightbox-inner .cmlc-body {
+  font-size: 15px;
+  margin: 0 0 20px;
+  opacity: 0.85;
+  line-height: 1.5;
+}
+
+.cmlc-lightbox-form {
+  flex-direction: column;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.cmlc-lightbox-form input[type="email"] {
+  min-width: 0;
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 15px;
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 8px;
+  background: rgba(255,255,255,.1);
+  color: inherit;
+}
+
+.cmlc-lightbox-form input[type="email"]::placeholder {
+  color: rgba(255,255,255,.5);
+}
+
+.cmlc-lightbox-form button {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 15px;
+}
+
+.cmlc-lightbox .cmlc-status {
+  text-align: center;
+  margin-top: 8px;
+}
+
+/* ==========================================================================
+   Shortcode embed
+   ========================================================================== */
 
 .cmlc-shortcode-wrap {
   background: #f9fafb;
@@ -86,15 +222,47 @@
   border-radius: 10px;
 }
 
+/* ==========================================================================
+   Turnstile
+   ========================================================================== */
+
+.cmlc-form .cf-turnstile,
+.cmlc-shortcode-form .cf-turnstile,
+.cmlc-lightbox-form .cf-turnstile {
+  margin-top: 4px;
+}
+
+/* ==========================================================================
+   Honeypot
+   ========================================================================== */
+
+.cmlc-honeypot {
+  position: absolute !important;
+  left: -9999px !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* ==========================================================================
+   Mobile
+   ========================================================================== */
+
 @media (max-width: 768px) {
   .cmlc-infobar {
     left: 8px;
     right: 8px;
-    bottom: 8px;
     width: min(var(--cmlc-width, 960px), calc(100vw - 16px));
     max-width: calc(100vw - 16px);
     min-height: auto;
     grid-template-columns: 1fr;
+  }
+
+  .cmlc-infobar[data-display-mode="bottom_bar"] {
+    bottom: 8px;
+  }
+
+  .cmlc-infobar[data-display-mode="top_bar"] {
+    top: 8px;
   }
 
   .cmlc-form,
@@ -108,16 +276,17 @@
     min-width: 0;
     width: 100%;
   }
-}
 
-.cmlc-honeypot {
-  position: absolute !important;
-  left: -9999px !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-}
+  .cmlc-lightbox {
+    width: calc(100vw - 24px);
+    max-width: calc(100vw - 24px);
+  }
 
-.cmlc-form .cf-turnstile,
-.cmlc-shortcode-form .cf-turnstile {
-  margin-top: 4px;
+  .cmlc-lightbox-inner {
+    padding: 32px 20px 24px;
+  }
+
+  .cmlc-lightbox-inner .cmlc-headline {
+    font-size: 20px;
+  }
 }

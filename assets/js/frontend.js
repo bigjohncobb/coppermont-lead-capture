@@ -1,10 +1,12 @@
 (function () {
   const bar = document.querySelector('[data-cmlc-infobar]');
+  const overlay = document.querySelector('[data-cmlc-overlay]');
   const cfg = window.cmlcConfig || {};
   const forms = Array.from(document.querySelectorAll('[data-cmlc-form]'));
 
   if (!bar && forms.length === 0) return;
 
+  const displayMode = cfg.displayMode || (bar ? bar.dataset.displayMode : 'bottom_bar') || 'bottom_bar';
   const storageKey = 'cmlcState';
   const closeBtn = bar ? bar.querySelector('[data-cmlc-close]') : null;
   const status = bar ? bar.querySelector('[data-cmlc-status]') : null;
@@ -85,11 +87,23 @@
     bar.classList.add('is-visible');
     bar.setAttribute('aria-hidden', 'false');
 
+    if (overlay && displayMode === 'lightbox') {
+      overlay.classList.add('is-visible');
+      overlay.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    }
+
     const state = loadState();
     state.views = (state.views || 0) + 1;
     saveState(state);
 
     postAjax('cmlc_track_impression', analyticsPayload()).catch(() => null);
+
+    // Focus first input for lightbox (accessibility).
+    if (displayMode === 'lightbox') {
+      const emailInput = bar.querySelector('input[type="email"]');
+      if (emailInput) setTimeout(() => emailInput.focus(), 350);
+    }
   };
 
   const dismiss = () => {
@@ -97,9 +111,16 @@
     const cooldownMs = (cfg.cooldownHours || 24) * 60 * 60 * 1000;
     state.dismissedUntil = Date.now() + cooldownMs;
     saveState(state);
+
     if (bar) {
       bar.classList.remove('is-visible');
       bar.setAttribute('aria-hidden', 'true');
+    }
+
+    if (overlay && displayMode === 'lightbox') {
+      overlay.classList.remove('is-visible');
+      overlay.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
     }
   };
 
@@ -126,6 +147,20 @@
 
   if (closeBtn) {
     closeBtn.addEventListener('click', dismiss);
+  }
+
+  // Close lightbox on overlay click.
+  if (overlay) {
+    overlay.addEventListener('click', dismiss);
+  }
+
+  // Close lightbox on Escape key.
+  if (displayMode === 'lightbox') {
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && bar && bar.classList.contains('is-visible')) {
+        dismiss();
+      }
+    });
   }
 
   forms.forEach((form) => {

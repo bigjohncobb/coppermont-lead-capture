@@ -67,6 +67,7 @@ class CMLC_Renderer {
 				'cooldownHours'          => (int) $campaign['repetition_cooldown_hours'],
 				'maxViews'               => (int) $campaign['max_views'],
 				'enableExitIntent'       => ! empty( $campaign['enable_exit_intent'] ),
+				'displayMode'            => (string) ( $campaign['display_mode'] ?? 'bottom_bar' ),
 				'enableMobile'           => ! empty( $campaign['enable_mobile'] ),
 				'enableCaptcha'          => ! empty( $settings['enable_captcha_validation'] ),
 				'turnstileEnabled'       => $turnstile_enabled,
