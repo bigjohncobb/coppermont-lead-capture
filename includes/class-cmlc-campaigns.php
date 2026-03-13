@@ -169,13 +169,13 @@ class CMLC_Campaigns {
 			}
 		}
 
-		$allowed = array_filter( array_map( 'trim', explode( ',', (string) $campaign['allowed_referrers'] ) ) );
-		if ( ! empty( $allowed ) ) {
+		$allowed_rules = CMLC_Renderer::normalize_allowed_referrer_domains( (string) $campaign['allowed_referrers'] );
+		if ( ! empty( $allowed_rules ) ) {
 			$referrer = wp_get_referer();
-			$host     = $referrer ? wp_parse_url( $referrer, PHP_URL_HOST ) : '';
+			$host     = $referrer ? CMLC_Renderer::normalize_domain( (string) wp_parse_url( $referrer, PHP_URL_HOST ) ) : '';
 			$matched  = false;
-			foreach ( $allowed as $domain ) {
-				if ( $host && false !== stripos( (string) $host, $domain ) ) {
+			foreach ( $allowed_rules as $rule ) {
+				if ( '' !== $host && CMLC_Renderer::host_matches_referrer_rule( $host, $rule ) ) {
 					$matched = true;
 					break;
 				}

@@ -227,7 +227,7 @@ class CMLC_Ajax {
 		$metadata    = array(
 			'page_url'   => isset( $_POST['page_url'] ) ? esc_url_raw( wp_unslash( $_POST['page_url'] ) ) : '',
 			'user_agent' => isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '',
-			'ip'         => $ip_address,
+			'ip_hash'    => hash( 'sha256', $ip_address . wp_salt( 'nonce' ) ),
 			'page_id'    => $page_id,
 		);
 
@@ -339,6 +339,7 @@ class CMLC_Ajax {
 				return new WP_Error( 'strict_mode', 'Turnstile verification service is unavailable. Submission blocked by strict mode.' );
 			}
 
+			do_action( 'cmlc_turnstile_failopen', 'network_error', $request );
 			return true;
 		}
 
@@ -349,6 +350,7 @@ class CMLC_Ajax {
 				return new WP_Error( 'strict_mode', 'Turnstile verification did not return a valid response. Submission blocked by strict mode.' );
 			}
 
+			do_action( 'cmlc_turnstile_failopen', 'invalid_response', $status_code );
 			return true;
 		}
 
@@ -388,7 +390,12 @@ class CMLC_Ajax {
 		 * @param array<string,mixed> $settings     Plugin settings.
 		 * @param array<string,mixed> $request      Request payload.
 		 */
-		return (bool) apply_filters( 'cmlc_validate_captcha', false, $captcha_token, $settings, $_POST );
+		$request = array(
+			'email'         => isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '',
+			'captcha_token' => $captcha_token,
+			'campaign_id'   => isset( $_POST['campaign_id'] ) ? absint( $_POST['campaign_id'] ) : 0,
+		);
+		return (bool) apply_filters( 'cmlc_validate_captcha', false, $captcha_token, $settings, $request );
 	}
 
 	/**
@@ -423,12 +430,45 @@ class CMLC_Ajax {
 			return;
 		}
 
-		$key         = $this->build_throttle_key( $action, $bucket, $identifier );
-		$current     = (int) get_transient( $key );
-		$current    += 1;
-		$is_limited  = $current > $limit;
+		$key = $this->build_throttle_key( $action, $bucket, $identifier );
 
-		set_transient( $key, $current, $window_seconds );
+		// Atomic increment via direct DB query to avoid TOCTOU race condition.
+		global $wpdb;
+		$transient_key    = '_transient_' . $key;
+		$transient_timeout = '_transient_timeout_' . $key;
+		$expiration       = time() + $window_seconds;
+
+		// Attempt atomic increment. If the row exists, increment in place.
+		$updated = $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$wpdb->options} SET option_value = option_value + 1 WHERE option_name = %s",
+				$transient_key
+			)
+		);
+
+		if ( $updated ) {
+			// Row existed and was incremented; read the new value.
+			$current = (int) $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT option_value FROM {$wpdb->options} WHERE option_name = %s",
+					$transient_key
+				)
+			);
+			// Refresh the timeout.
+			$wpdb->update(
+				$wpdb->options,
+				array( 'option_value' => $expiration ),
+				array( 'option_name' => $transient_timeout ),
+				array( '%d' ),
+				array( '%s' )
+			);
+		} else {
+			// First request in this window — create the transient.
+			$current = 1;
+			set_transient( $key, $current, $window_seconds );
+		}
+
+		$is_limited = $current > $limit;
 
 		if ( $is_limited ) {
 			$this->record_throttle_event(
@@ -503,6 +543,14 @@ class CMLC_Ajax {
 
 		/**
 		 * Filters detected client IP for reverse proxy setups.
+		 *
+		 * WARNING: Only trust proxy headers (X-Forwarded-For, X-Real-IP)
+		 * if your server is behind a known reverse proxy. Validate the
+		 * header contains a single IP and the request originates from
+		 * a trusted proxy IP range. Incorrect implementations allow
+		 * attackers to bypass rate limiting entirely.
+		 *
+		 * @param string $ip Client IP from REMOTE_ADDR.
 		 */
 		return (string) apply_filters( 'cmlc_rate_limit_client_ip', $ip );
 	}

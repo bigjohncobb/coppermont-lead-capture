@@ -5,6 +5,10 @@
  * @var array<string,mixed> $settings
  * @var string              $style
  */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 ?>
 <div class="cmlc-infobar" data-cmlc-infobar data-campaign-id="<?php echo esc_attr( (string) $settings['id'] ); ?>" style="<?php echo esc_attr( $style ); ?>" aria-hidden="true">
 	<button type="button" class="cmlc-close" data-cmlc-close aria-label="Close infobar">×</button>

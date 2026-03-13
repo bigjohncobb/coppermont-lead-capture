@@ -261,6 +261,8 @@ class CMLC_Leads_Admin {
 
 		header( 'Content-Type: text/csv; charset=utf-8' );
 		header( 'Content-Disposition: attachment; filename=cmlc-leads-' . gmdate( 'Y-m-d' ) . '.csv' );
+		header( 'X-Content-Type-Options: nosniff' );
+		header( 'Cache-Control: no-store' );
 
 		$output = fopen( 'php://output', 'w' );
 		fputcsv( $output, array( 'id', 'email', 'source', 'campaign_id', 'metadata', 'created_at' ) );
@@ -270,10 +272,10 @@ class CMLC_Leads_Admin {
 				$output,
 				array(
 					(int) $lead['id'],
-					(string) $lead['email'],
-					(string) $lead['source'],
-					(string) $lead['campaign_id'],
-					(string) $lead['metadata'],
+					self::sanitize_csv_field( (string) $lead['email'] ),
+					self::sanitize_csv_field( (string) $lead['source'] ),
+					self::sanitize_csv_field( (string) $lead['campaign_id'] ),
+					self::sanitize_csv_field( (string) $lead['metadata'] ),
 					(string) $lead['created_at'],
 				)
 			);
@@ -281,6 +283,19 @@ class CMLC_Leads_Admin {
 
 		fclose( $output );
 		exit;
+	}
+
+	/**
+	 * Prefixes formula-triggering characters to prevent CSV injection.
+	 *
+	 * @param string $value Raw cell value.
+	 * @return string
+	 */
+	private static function sanitize_csv_field( $value ) {
+		if ( '' !== $value && preg_match( '/^[=+\-@\t\r]/', $value ) ) {
+			return "'" . $value;
+		}
+		return $value;
 	}
 
 	/**
