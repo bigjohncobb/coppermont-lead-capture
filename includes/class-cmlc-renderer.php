@@ -39,6 +39,11 @@ class CMLC_Renderer {
 
 		$settings = CMLC_Settings::get();
 
+		$page_location = self::get_current_page_location();
+		$page_hash     = CMLC_Security::page_hash( $page_location );
+		$campaign_hash = CMLC_Security::campaign_hash( $settings );
+		$context_token = CMLC_Security::issue_context_token( $campaign_hash, $page_hash );
+
 		wp_enqueue_style( 'cmlc-frontend', CMLC_URL . 'assets/css/frontend.css', array(), CMLC_VERSION );
 		wp_enqueue_script( 'cmlc-frontend', CMLC_URL . 'assets/js/frontend.js', array(), CMLC_VERSION, true );
 
@@ -53,6 +58,8 @@ class CMLC_Renderer {
 			array(
 				'ajaxUrl'                => admin_url( 'admin-ajax.php' ),
 				'nonce'                  => wp_create_nonce( 'cmlc_nonce' ),
+				'pageLocation'           => $page_location,
+				'contextToken'           => $context_token,
 				'pageId'                 => get_queried_object_id(),
 				'campaignId'             => (int) $campaign['id'],
 				'scrollPercent'          => (int) $campaign['scroll_trigger_percent'],
@@ -103,6 +110,23 @@ class CMLC_Renderer {
 		$settings['turnstile_enabled']  = CMLC_Settings::get()['turnstile_enabled'];
 		$settings['turnstile_site_key'] = CMLC_Settings::get()['turnstile_site_key'];
 		include CMLC_PATH . 'templates/infobar.php';
+	}
+
+	/**
+	 * Gets current absolute page location.
+	 *
+	 * @return string
+	 */
+	private static function get_current_page_location() {
+		$scheme = is_ssl() ? 'https' : 'http';
+		$host   = isset( $_SERVER['HTTP_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) : '';
+		$uri    = isset( $_SERVER['REQUEST_URI'] ) ? esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
+
+		if ( empty( $host ) ) {
+			return home_url( add_query_arg( null, null ) );
+		}
+
+		return esc_url_raw( $scheme . '://' . $host . $uri );
 	}
 
 	/**

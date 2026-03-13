@@ -21,6 +21,7 @@ require_once CMLC_PATH . 'includes/class-cmlc-leads-admin.php';
 require_once CMLC_PATH . 'includes/class-cmlc-data-manager.php';
 require_once CMLC_PATH . 'includes/class-cmlc-shortcodes.php';
 require_once CMLC_PATH . 'includes/class-cmlc-renderer.php';
+require_once CMLC_PATH . 'includes/class-cmlc-security.php';
 require_once CMLC_PATH . 'includes/class-cmlc-ajax.php';
 require_once CMLC_PATH . 'includes/class-cmlc-admin-security.php';
 require_once CMLC_PATH . 'includes/class-cmlc-admin-actions.php';

@@ -77,6 +77,11 @@ class CMLC_Settings {
 			'turnstile_secret_key'       => '',
 			'turnstile_strict_mode'      => 1,
 			'analytics_retention_days'   => 180,
+			'analytics_daily_impressions'=> 0,
+			'analytics_daily_submissions'=> 0,
+			'analytics_suspected_bot_traffic' => 0,
+			'analytics_daily_suspected_bot' => 0,
+			'analytics_daily_last_rollover_date' => '',
 		);
 	}
 
@@ -369,9 +374,19 @@ class CMLC_Settings {
 			<?php if ( in_array( $active_tab, array( 'analytics', 'leads' ), true ) ) : ?>
 				<?php if ( 'analytics' === $active_tab ) : ?>
 					<?php $totals = CMLC_Analytics::get_totals(); ?>
+					<?php
+					$daily_counters = get_option( 'cmlc_daily_counters', array() );
+					$daily_counters = is_array( $daily_counters ) ? $daily_counters : array();
+					$today          = gmdate( 'Y-m-d' );
+					$today_counts   = isset( $daily_counters[ $today ] ) && is_array( $daily_counters[ $today ] ) ? $daily_counters[ $today ] : array();
+					?>
 					<h2><?php esc_html_e( 'Analytics', 'coppermont-lead-capture' ); ?></h2>
-					<p><strong>Infobar Shows:</strong> <?php echo esc_html( (string) $totals['impressions'] ); ?></p>
-					<p><strong>Email Submissions:</strong> <?php echo esc_html( (string) $totals['submissions'] ); ?></p>
+					<p><strong>Infobar Shows (lifetime):</strong> <?php echo esc_html( (string) $totals['impressions'] ); ?></p>
+					<p><strong>Infobar Shows (today):</strong> <?php echo esc_html( (string) absint( $today_counts['impressions'] ?? 0 ) ); ?></p>
+					<p><strong>Email Submissions (lifetime):</strong> <?php echo esc_html( (string) $totals['submissions'] ); ?></p>
+					<p><strong>Email Submissions (today):</strong> <?php echo esc_html( (string) absint( $today_counts['submissions'] ?? 0 ) ); ?></p>
+					<p><strong>Suspected Bot Traffic (lifetime):</strong> <?php echo esc_html( (string) $settings['analytics_suspected_bot_traffic'] ); ?></p>
+					<p><strong>Suspected Bot Traffic (today):</strong> <?php echo esc_html( (string) absint( $today_counts['suspected_bot'] ?? 0 ) ); ?></p>
 					<p><strong>Conversion Rate:</strong> <?php echo esc_html( number_format_i18n( (float) $totals['conversion_rate'], 2 ) ); ?>%</p>
 					<p class="description">Legacy counters are still updated for backward compatibility and included in totals via one-time migration offsets.</p>
 					<?php $top_pages = CMLC_Analytics::get_top_pages( 5 ); ?>
