@@ -42,6 +42,8 @@ class CMLC_Renderer {
 			array(
 				'ajaxUrl'               => admin_url( 'admin-ajax.php' ),
 				'nonce'                 => wp_create_nonce( 'cmlc_nonce' ),
+				'pageId'                => get_queried_object_id(),
+				'campaignId'            => 1,
 				'scrollPercent'         => (int) $settings['scroll_trigger_percent'],
 				'timeDelay'             => (int) $settings['time_delay_seconds'],
 				'cooldownHours'         => (int) $settings['repetition_cooldown_hours'],

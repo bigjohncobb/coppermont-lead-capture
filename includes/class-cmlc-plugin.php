@@ -20,6 +20,7 @@ require_once CMLC_PATH . 'includes/class-cmlc-renderer.php';
 require_once CMLC_PATH . 'includes/class-cmlc-ajax.php';
 require_once CMLC_PATH . 'includes/class-cmlc-admin-security.php';
 require_once CMLC_PATH . 'includes/class-cmlc-admin-actions.php';
+require_once CMLC_PATH . 'includes/class-cmlc-analytics.php';
 
 class CMLC_Plugin {
 	/**
@@ -58,6 +59,9 @@ class CMLC_Plugin {
 		if ( false === get_option( 'cmlc_settings' ) ) {
 			add_option( 'cmlc_settings', CMLC_Settings::defaults() );
 		}
+
+		CMLC_Analytics::install_schema();
+		CMLC_Analytics::schedule_cleanup();
 	}
 
 	/**
@@ -67,6 +71,7 @@ class CMLC_Plugin {
 	 */
 	public static function deactivate() {
 		// Intentionally retain settings and analytics.
+		wp_clear_scheduled_hook( CMLC_Analytics::CLEANUP_HOOK );
 	}
 
 	/**
@@ -89,5 +94,8 @@ class CMLC_Plugin {
 		new CMLC_Renderer();
 		new CMLC_Ajax();
 		new CMLC_Admin_Actions();
+		new CMLC_Analytics();
+
+		CMLC_Analytics::install_schema();
 	}
 }

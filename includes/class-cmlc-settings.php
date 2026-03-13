@@ -58,6 +58,7 @@ class CMLC_Settings {
 			'turnstile_site_key'         => '',
 			'turnstile_secret_key'       => '',
 			'turnstile_strict_mode'      => 1,
+			'analytics_retention_days'   => 180,
 		);
 	}
 
@@ -157,6 +158,9 @@ class CMLC_Settings {
 		$settings['turnstile_site_key']    = isset( $raw['turnstile_site_key'] ) ? sanitize_text_field( $raw['turnstile_site_key'] ) : $settings['turnstile_site_key'];
 		$settings['turnstile_secret_key']  = isset( $raw['turnstile_secret_key'] ) ? sanitize_text_field( $raw['turnstile_secret_key'] ) : $settings['turnstile_secret_key'];
 		$settings['turnstile_strict_mode'] = empty( $raw['turnstile_strict_mode'] ) ? 0 : 1;
+
+		$settings['analytics_retention_days'] = isset( $raw['analytics_retention_days'] ) ? absint( $raw['analytics_retention_days'] ) : $settings['analytics_retention_days'];
+		$settings['analytics_retention_days'] = in_array( $settings['analytics_retention_days'], array( 90, 180, 365 ), true ) ? $settings['analytics_retention_days'] : 180;
 
 		if ( empty( $settings['headline'] ) ) {
 			add_settings_error( 'cmlc_settings', 'cmlc_headline_required', __( 'Headline is required.', 'coppermont-lead-capture' ), 'error' );
@@ -346,9 +350,21 @@ class CMLC_Settings {
 
 			<?php if ( in_array( $active_tab, array( 'analytics', 'leads' ), true ) ) : ?>
 				<?php if ( 'analytics' === $active_tab ) : ?>
+					<?php $totals = CMLC_Analytics::get_totals(); ?>
 					<h2><?php esc_html_e( 'Analytics', 'coppermont-lead-capture' ); ?></h2>
-					<p><strong>Infobar Shows:</strong> <?php echo esc_html( (string) $settings['analytics_impressions'] ); ?></p>
-					<p><strong>Email Submissions:</strong> <?php echo esc_html( (string) $settings['analytics_submissions'] ); ?></p>
+					<p><strong>Infobar Shows:</strong> <?php echo esc_html( (string) $totals['impressions'] ); ?></p>
+					<p><strong>Email Submissions:</strong> <?php echo esc_html( (string) $totals['submissions'] ); ?></p>
+					<p><strong>Conversion Rate:</strong> <?php echo esc_html( number_format_i18n( (float) $totals['conversion_rate'], 2 ) ); ?>%</p>
+					<p class="description">Legacy counters are still updated for backward compatibility and included in totals via one-time migration offsets.</p>
+					<?php $top_pages = CMLC_Analytics::get_top_pages( 5 ); ?>
+					<?php if ( ! empty( $top_pages ) ) : ?>
+						<h3>Top Pages</h3>
+						<ul>
+							<?php foreach ( $top_pages as $row ) : ?>
+								<li><?php echo esc_html( 'Page #' . $row['label'] . ': ' . absint( $row['total'] ) ); ?></li>
+							<?php endforeach; ?>
+						</ul>
+					<?php endif; ?>
 				<?php else : ?>
 					<h2><?php esc_html_e( 'Leads', 'coppermont-lead-capture' ); ?></h2>
 					<p><?php esc_html_e( 'Lead records are managed in your integrations or custom storage layer.', 'coppermont-lead-capture' ); ?></p>
@@ -382,6 +398,7 @@ class CMLC_Settings {
 									<p class="description">Fail closed when Turnstile verification service times out or errors. Recommended for production anti-spam protection.</p>
 								</td>
 							</tr>
+							<tr><th scope="row">Analytics Retention</th><td><select name="cmlc_settings[analytics_retention_days]"><option value="90" <?php selected( 90, (int) $settings['analytics_retention_days'] ); ?>>90 days</option><option value="180" <?php selected( 180, (int) $settings['analytics_retention_days'] ); ?>>180 days</option><option value="365" <?php selected( 365, (int) $settings['analytics_retention_days'] ); ?>>365 days</option></select></td></tr>
 						<?php elseif ( 'design' === $active_tab ) : ?>
 							<tr><th scope="row">Background Color</th><td><input type="color" name="cmlc_settings[bg_color]" value="<?php echo esc_attr( $settings['bg_color'] ); ?>"></td></tr>
 							<tr><th scope="row">Text Color</th><td><input type="color" name="cmlc_settings[text_color]" value="<?php echo esc_attr( $settings['text_color'] ); ?>"></td></tr>

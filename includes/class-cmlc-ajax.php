@@ -69,11 +69,26 @@ class CMLC_Ajax {
 			$this->assert_rate_limit( 'track_impression', 'ip_hour', $ip_address, HOUR_IN_SECONDS, 2000 );
 		}
 
+		$page_id       = isset( $_POST['page_id'] ) ? absint( wp_unslash( $_POST['page_id'] ) ) : 0;
+		$campaign_id   = isset( $_POST['campaign_id'] ) ? absint( wp_unslash( $_POST['campaign_id'] ) ) : 1;
+		$referrer_host = isset( $_POST['referrer_host'] ) ? sanitize_text_field( wp_unslash( $_POST['referrer_host'] ) ) : '';
+
+		CMLC_Analytics::record_event(
+			'impression',
+			array(
+				'page_id'       => $page_id,
+				'campaign_id'   => $campaign_id,
+				'referrer_host' => $referrer_host,
+			)
+		);
+
+		// Legacy counters are retained for backward compatibility.
 		$settings                          = CMLC_Settings::get();
 		$settings['analytics_impressions'] = absint( $settings['analytics_impressions'] ) + 1;
 		update_option( CMLC_Settings::OPTION_KEY, $settings );
 
-		wp_send_json_success( array( 'impressions' => $settings['analytics_impressions'] ) );
+		$totals = CMLC_Analytics::get_totals();
+		wp_send_json_success( array( 'impressions' => $totals['impressions'] ) );
 	}
 
 	/**
@@ -107,6 +122,20 @@ class CMLC_Ajax {
 			$this->assert_identical_email_cooldown( $email, $ip_address );
 		}
 
+		$page_id       = isset( $_POST['page_id'] ) ? absint( wp_unslash( $_POST['page_id'] ) ) : 0;
+		$campaign_id   = isset( $_POST['campaign_id'] ) ? absint( wp_unslash( $_POST['campaign_id'] ) ) : 1;
+		$referrer_host = isset( $_POST['referrer_host'] ) ? sanitize_text_field( wp_unslash( $_POST['referrer_host'] ) ) : '';
+
+		CMLC_Analytics::record_event(
+			'submission',
+			array(
+				'page_id'       => $page_id,
+				'campaign_id'   => $campaign_id,
+				'referrer_host' => $referrer_host,
+			)
+		);
+
+		// Legacy counters are retained for backward compatibility.
 		$settings                          = CMLC_Settings::get();
 
 		if ( ! empty( $settings['enable_captcha_validation'] ) && ! $this->passes_captcha_validation( $settings ) ) {

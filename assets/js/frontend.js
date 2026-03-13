@@ -31,6 +31,21 @@
     return true;
   };
 
+
+  const getReferrerHost = () => {
+    try {
+      return document.referrer ? new URL(document.referrer).host : '';
+    } catch (e) {
+      return '';
+    }
+  };
+
+  const analyticsPayload = () => ({
+    page_id: Number(cfg.pageId || 0),
+    campaign_id: Number(cfg.campaignId || 1),
+    referrer_host: getReferrerHost()
+  });
+
   const postAjax = (action, payload = {}) => {
     const body = new URLSearchParams({ action, nonce: cfg.nonce, ...payload });
     return fetch(cfg.ajaxUrl, {
@@ -61,7 +76,7 @@
     state.views = (state.views || 0) + 1;
     saveState(state);
 
-    postAjax('cmlc_track_impression').catch(() => null);
+    postAjax('cmlc_track_impression', analyticsPayload()).catch(() => null);
   };
 
   const dismiss = () => {
@@ -127,7 +142,8 @@
         cmlc_website: honeypotInput ? honeypotInput.value : '',
         cmlc_form_token: timestampInput ? timestampInput.value : '',
         captcha_token: captchaInput ? captchaInput.value : '',
-        turnstile_token: turnstileToken
+        turnstile_token: turnstileToken,
+        ...analyticsPayload()
       };
 
       postAjax('cmlc_submit_email', payload)
