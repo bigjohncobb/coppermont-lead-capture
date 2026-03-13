@@ -27,6 +27,7 @@ require_once CMLC_PATH . 'includes/class-cmlc-admin-security.php';
 require_once CMLC_PATH . 'includes/class-cmlc-admin-actions.php';
 require_once CMLC_PATH . 'includes/class-cmlc-analytics.php';
 require_once CMLC_PATH . 'includes/class-cmlc-forms-bridge.php';
+require_once CMLC_PATH . 'includes/class-cmlc-integrations.php';
 
 class CMLC_Plugin {
 	/**
@@ -112,6 +113,7 @@ class CMLC_Plugin {
 		new CMLC_Admin_Actions();
 		new CMLC_Analytics();
 		new CMLC_Forms_Bridge();
+		new CMLC_Integrations();
 
 		CMLC_Analytics::install_schema();
 	}

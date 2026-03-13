@@ -94,6 +94,12 @@ class CMLC_Settings {
 			'analytics_daily_last_rollover_date' => '',
 			'forms_bridge_enabled'               => 0,
 			'forms_bridge_form_ids'              => '',
+			'beehiiv_enabled'                    => 0,
+			'beehiiv_api_key'                    => '',
+			'beehiiv_publication_id'             => '',
+			'ghl_enabled'                        => 0,
+			'ghl_api_key'                        => '',
+			'ghl_location_id'                    => '',
 		);
 	}
 
@@ -199,6 +205,13 @@ class CMLC_Settings {
 
 		$settings['forms_bridge_enabled']  = empty( $raw['forms_bridge_enabled'] ) ? 0 : 1;
 		$settings['forms_bridge_form_ids'] = isset( $raw['forms_bridge_form_ids'] ) ? sanitize_text_field( $raw['forms_bridge_form_ids'] ) : $settings['forms_bridge_form_ids'];
+
+		$settings['beehiiv_enabled']        = empty( $raw['beehiiv_enabled'] ) ? 0 : 1;
+		$settings['beehiiv_api_key']        = isset( $raw['beehiiv_api_key'] ) ? sanitize_text_field( $raw['beehiiv_api_key'] ) : $settings['beehiiv_api_key'];
+		$settings['beehiiv_publication_id'] = isset( $raw['beehiiv_publication_id'] ) ? sanitize_text_field( $raw['beehiiv_publication_id'] ) : $settings['beehiiv_publication_id'];
+		$settings['ghl_enabled']            = empty( $raw['ghl_enabled'] ) ? 0 : 1;
+		$settings['ghl_api_key']            = isset( $raw['ghl_api_key'] ) ? sanitize_text_field( $raw['ghl_api_key'] ) : $settings['ghl_api_key'];
+		$settings['ghl_location_id']        = isset( $raw['ghl_location_id'] ) ? sanitize_text_field( $raw['ghl_location_id'] ) : $settings['ghl_location_id'];
 
 		if ( empty( $settings['headline'] ) ) {
 			add_settings_error( 'cmlc_settings', 'cmlc_headline_required', __( 'Headline is required.', 'coppermont-lead-capture' ), 'error' );
@@ -471,6 +484,46 @@ class CMLC_Settings {
 								<td>
 									<input class="regular-text" name="cmlc_settings[forms_bridge_form_ids]" value="<?php echo esc_attr( $settings['forms_bridge_form_ids'] ); ?>" placeholder="All forms">
 									<p class="description">Comma-separated form IDs. Leave blank to capture leads from all forms.</p>
+								</td>
+							</tr>
+							<tr><td colspan="2" style="padding: 0;"><hr style="margin: 8px 0;"></td></tr>
+							<tr><td colspan="2" style="padding: 4px 10px 0;"><strong><?php esc_html_e( 'beehiiv', 'coppermont-lead-capture' ); ?></strong></td></tr>
+							<tr>
+								<th scope="row">Enable beehiiv</th>
+								<td>
+									<input type="checkbox" name="cmlc_settings[beehiiv_enabled]" value="1" <?php checked( 1, $settings['beehiiv_enabled'] ); ?>>
+									<p class="description">Push every new lead to your beehiiv publication as a subscriber.</p>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row">beehiiv API Key</th>
+								<td><input type="password" class="regular-text" name="cmlc_settings[beehiiv_api_key]" value="<?php echo esc_attr( $settings['beehiiv_api_key'] ); ?>" autocomplete="new-password"></td>
+							</tr>
+							<tr>
+								<th scope="row">Publication ID</th>
+								<td>
+									<input class="regular-text" name="cmlc_settings[beehiiv_publication_id]" value="<?php echo esc_attr( $settings['beehiiv_publication_id'] ); ?>" placeholder="pub_xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+									<p class="description">Found in beehiiv Settings &rarr; Integrations &rarr; API.</p>
+								</td>
+							</tr>
+							<tr><td colspan="2" style="padding: 0;"><hr style="margin: 8px 0;"></td></tr>
+							<tr><td colspan="2" style="padding: 4px 10px 0;"><strong><?php esc_html_e( 'GoHighLevel', 'coppermont-lead-capture' ); ?></strong></td></tr>
+							<tr>
+								<th scope="row">Enable GoHighLevel</th>
+								<td>
+									<input type="checkbox" name="cmlc_settings[ghl_enabled]" value="1" <?php checked( 1, $settings['ghl_enabled'] ); ?>>
+									<p class="description">Create a contact in GoHighLevel for every new lead.</p>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row">GHL API Key</th>
+								<td><input type="password" class="regular-text" name="cmlc_settings[ghl_api_key]" value="<?php echo esc_attr( $settings['ghl_api_key'] ); ?>" autocomplete="new-password"></td>
+							</tr>
+							<tr>
+								<th scope="row">Location ID</th>
+								<td>
+									<input class="regular-text" name="cmlc_settings[ghl_location_id]" value="<?php echo esc_attr( $settings['ghl_location_id'] ); ?>" placeholder="Optional — for v2 API">
+									<p class="description">Required for GHL API v2. Leave blank to use v1 API.</p>
 								</td>
 							</tr>
 						<?php elseif ( 'design' === $active_tab ) : ?>
