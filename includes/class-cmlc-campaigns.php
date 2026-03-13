@@ -17,7 +17,12 @@ class CMLC_Campaigns {
 	 * Constructor.
 	 */
 	public function __construct() {
-		add_action( 'init', array( $this, 'register_post_type' ) );
+		// Register CPT immediately if init already fired (bootstrapped during init).
+		if ( did_action( 'init' ) ) {
+			$this->register_post_type();
+		} else {
+			add_action( 'init', array( $this, 'register_post_type' ) );
+		}
 		add_action( 'add_meta_boxes', array( $this, 'register_meta_box' ) );
 		add_action( 'save_post_' . self::POST_TYPE, array( $this, 'save_campaign_meta' ) );
 	}
