@@ -31,7 +31,6 @@
     return true;
   };
 
-
   const getReferrerHost = () => {
     try {
       return document.referrer ? new URL(document.referrer).host : '';
@@ -40,14 +39,21 @@
     }
   };
 
+  const inferCampaignId = () => {
+    const fromConfig = parseInt(cfg.campaignId, 10);
+    if (!Number.isNaN(fromConfig) && fromConfig > 0) return fromConfig;
+    if (bar && bar.dataset && bar.dataset.campaignId) return parseInt(bar.dataset.campaignId, 10) || 0;
+    return 0;
+  };
+
   const analyticsPayload = () => ({
     page_id: Number(cfg.pageId || 0),
-    campaign_id: Number(cfg.campaignId || 1),
+    campaign_id: inferCampaignId(),
     referrer_host: getReferrerHost()
   });
 
   const postAjax = (action, payload = {}) => {
-    const body = new URLSearchParams({ action, nonce: cfg.nonce, ...payload });
+    const body = new URLSearchParams({ action, nonce: cfg.nonce, ...analyticsPayload(), ...payload });
     return fetch(cfg.ajaxUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

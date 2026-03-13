@@ -24,7 +24,7 @@
 
 .cmlc-infobar.is-visible {
   transform: translateY(0);
-  opacity: 1;
+  opacity: var(--cmlc-opacity, 1);
 }
 
 .cmlc-close {

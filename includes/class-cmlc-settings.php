@@ -20,6 +20,7 @@ class CMLC_Settings {
 	 */
 	public function __construct() {
 		add_action( 'admin_init', array( $this, 'handle_tab_save' ) );
+		add_action( 'wp_dashboard_setup', array( $this, 'register_dashboard_widget' ) );
 	}
 
 	/**
@@ -365,6 +366,8 @@ class CMLC_Settings {
 							<?php endforeach; ?>
 						</ul>
 					<?php endif; ?>
+					<h3>Campaign Performance</h3>
+					<?php $this->render_campaign_performance(); ?>
 				<?php else : ?>
 					<h2><?php esc_html_e( 'Leads', 'coppermont-lead-capture' ); ?></h2>
 					<p><?php esc_html_e( 'Lead records are managed in your integrations or custom storage layer.', 'coppermont-lead-capture' ); ?></p>
@@ -428,5 +431,48 @@ class CMLC_Settings {
 			<?php endif; ?>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Registers admin dashboard widget.
+	 *
+	 * @return void
+	 */
+	public function register_dashboard_widget() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		wp_add_dashboard_widget( 'cmlc_campaign_performance', __( 'Lead Campaign Performance', 'coppermont-lead-capture' ), array( $this, 'render_campaign_performance' ) );
+	}
+
+	/**
+	 * Renders campaign performance table.
+	 *
+	 * @return void
+	 */
+	public function render_campaign_performance() {
+		$rows = class_exists( 'CMLC_Analytics' ) ? CMLC_Analytics::get_campaign_performance() : array();
+
+		if ( empty( $rows ) ) {
+			echo '<p>No campaigns available yet. Create one under Lead Capture &rarr; Campaigns.</p>';
+			return;
+		}
+
+		$active_count   = count( array_filter( $rows, static function( $row ) { return 'active' === $row['status']; } ) );
+		$inactive_count = count( $rows ) - $active_count;
+		echo '<p><strong>Active campaigns:</strong> ' . esc_html( (string) $active_count ) . ' &nbsp; <strong>Inactive campaigns:</strong> ' . esc_html( (string) $inactive_count ) . '</p>';
+
+		echo '<table class="widefat striped"><thead><tr><th>Campaign</th><th>Status</th><th>Impressions</th><th>Submissions</th><th>Conversion Rate</th></tr></thead><tbody>';
+		foreach ( $rows as $row ) {
+			echo '<tr>';
+			echo '<td>' . esc_html( $row['title'] ) . '</td>';
+			echo '<td>' . esc_html( ucfirst( $row['status'] ) ) . '</td>';
+			echo '<td>' . esc_html( (string) $row['impressions'] ) . '</td>';
+			echo '<td>' . esc_html( (string) $row['submissions'] ) . '</td>';
+			echo '<td>' . esc_html( number_format_i18n( (float) $row['conversion'], 2 ) ) . '%</td>';
+			echo '</tr>';
+		}
+		echo '</tbody></table>';
 	}
 }

@@ -1,6 +1,6 @@
 <?php
 /**
- * Analytics service and event storage.
+ * Analytics service, event storage, and lead persistence.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -49,19 +49,30 @@ class CMLC_Analytics {
 	}
 
 	/**
-	 * Creates/updates analytics schema.
+	 * Retrieves leads table name.
+	 *
+	 * @return string
+	 */
+	public static function leads_table_name() {
+		global $wpdb;
+
+		return $wpdb->prefix . 'cmlc_leads';
+	}
+
+	/**
+	 * Creates/updates analytics schema (events + leads tables).
 	 *
 	 * @return void
 	 */
 	public static function install_schema() {
 		global $wpdb;
 
-		$table_name      = self::table_name();
 		$charset_collate = $wpdb->get_charset_collate();
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
-		$sql = "CREATE TABLE {$table_name} (
+		$events_table = self::table_name();
+		$sql = "CREATE TABLE {$events_table} (
 			id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 			campaign_id BIGINT(20) UNSIGNED NOT NULL DEFAULT 0,
 			event_type VARCHAR(20) NOT NULL,
@@ -77,7 +88,30 @@ class CMLC_Analytics {
 		) {$charset_collate};";
 
 		dbDelta( $sql );
+
+		$leads_table = self::leads_table_name();
+		$leads_sql = "CREATE TABLE {$leads_table} (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			campaign_id bigint(20) unsigned NOT NULL,
+			email varchar(190) NOT NULL,
+			created_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			KEY campaign_id (campaign_id),
+			KEY email (email)
+		) {$charset_collate};";
+
+		dbDelta( $leads_sql );
+
 		self::maybe_seed_legacy_totals();
+	}
+
+	/**
+	 * Alias for install_schema for backward compatibility with PR migration code.
+	 *
+	 * @return void
+	 */
+	public static function create_tables() {
+		self::install_schema();
 	}
 
 	/**
@@ -124,6 +158,49 @@ class CMLC_Analytics {
 		);
 
 		return false !== $result;
+	}
+
+	/**
+	 * Records an impression (convenience wrapper).
+	 *
+	 * @param int $campaign_id Campaign ID.
+	 * @return bool
+	 */
+	public static function record_impression( $campaign_id ) {
+		return self::record_event( 'impression', array( 'campaign_id' => $campaign_id ) );
+	}
+
+	/**
+	 * Records a submission (convenience wrapper).
+	 *
+	 * @param int $campaign_id Campaign ID.
+	 * @return bool
+	 */
+	public static function record_submission( $campaign_id ) {
+		return self::record_event( 'submission', array( 'campaign_id' => $campaign_id ) );
+	}
+
+	/**
+	 * Writes lead record.
+	 *
+	 * @param int    $campaign_id Campaign ID.
+	 * @param string $email Lead email.
+	 * @return int
+	 */
+	public static function record_lead( $campaign_id, $email ) {
+		global $wpdb;
+
+		$wpdb->insert(
+			self::leads_table_name(),
+			array(
+				'campaign_id' => absint( $campaign_id ),
+				'email'       => sanitize_email( $email ),
+				'created_at'  => current_time( 'mysql' ),
+			),
+			array( '%d', '%s', '%s' )
+		);
+
+		return (int) $wpdb->insert_id;
 	}
 
 	/**
@@ -243,6 +320,74 @@ class CMLC_Analytics {
 	 */
 	public static function get_top_campaigns( $limit = 10, $event_type = '' ) {
 		return self::get_top_dimension( 'campaign_id', $limit, $event_type );
+	}
+
+	/**
+	 * Fetch campaign performance.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	public static function get_campaign_performance() {
+		global $wpdb;
+
+		if ( ! class_exists( 'CMLC_Campaigns' ) ) {
+			return array();
+		}
+
+		$campaigns = get_posts(
+			array(
+				'post_type'      => CMLC_Campaigns::POST_TYPE,
+				'post_status'    => 'publish',
+				'posts_per_page' => 100,
+			)
+		);
+
+		$rows        = array();
+		$events_table = self::table_name();
+
+		foreach ( $campaigns as $campaign_post ) {
+			$campaign = CMLC_Campaigns::get_campaign( $campaign_post->ID );
+			if ( ! $campaign ) {
+				continue;
+			}
+			$campaign_id = (int) $campaign_post->ID;
+			$counts      = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT event_type, COUNT(*) AS event_count FROM {$events_table} WHERE campaign_id = %d GROUP BY event_type",
+					$campaign_id
+				),
+				ARRAY_A
+			);
+
+			$impressions = (int) $campaign['baseline_impressions'];
+			$submissions = (int) $campaign['baseline_submissions'];
+			foreach ( $counts as $count ) {
+				if ( 'impression' === $count['event_type'] ) {
+					$impressions += (int) $count['event_count'];
+				}
+				if ( 'submission' === $count['event_type'] ) {
+					$submissions += (int) $count['event_count'];
+				}
+			}
+
+			$rows[] = array(
+				'campaign_id' => $campaign_id,
+				'title'       => get_the_title( $campaign_id ),
+				'status'      => $campaign['status'],
+				'impressions' => $impressions,
+				'submissions' => $submissions,
+				'conversion'  => $impressions > 0 ? round( ( $submissions / $impressions ) * 100, 2 ) : 0,
+			);
+		}
+
+		usort(
+			$rows,
+			function ( $left, $right ) {
+				return $right['conversion'] <=> $left['conversion'];
+			}
+		);
+
+		return $rows;
 	}
 
 	/**

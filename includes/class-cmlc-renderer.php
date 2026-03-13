@@ -17,16 +17,27 @@ class CMLC_Renderer {
 	}
 
 	/**
-	 * Enqueues assets and settings.
+	 * Enqueues assets and campaign config.
 	 *
 	 * @return void
 	 */
 	public function enqueue() {
-		$settings = CMLC_Settings::get();
+		self::enqueue_assets( 0 );
+	}
 
-		if ( empty( $settings['enabled'] ) || ! $this->is_eligible_page( $settings ) ) {
-			return;
+	/**
+	 * Enqueues campaign-specific assets.
+	 *
+	 * @param int $campaign_id Preferred campaign ID.
+	 * @return array<string,mixed>|null
+	 */
+	public static function enqueue_assets( $campaign_id = 0 ) {
+		$campaign = CMLC_Campaigns::resolve_campaign( $campaign_id );
+		if ( ! $campaign ) {
+			return null;
 		}
+
+		$settings = CMLC_Settings::get();
 
 		wp_enqueue_style( 'cmlc-frontend', CMLC_URL . 'assets/css/frontend.css', array(), CMLC_VERSION );
 		wp_enqueue_script( 'cmlc-frontend', CMLC_URL . 'assets/js/frontend.js', array(), CMLC_VERSION, true );
@@ -40,22 +51,24 @@ class CMLC_Renderer {
 			'cmlc-frontend',
 			'cmlcConfig',
 			array(
-				'ajaxUrl'               => admin_url( 'admin-ajax.php' ),
-				'nonce'                 => wp_create_nonce( 'cmlc_nonce' ),
-				'pageId'                => get_queried_object_id(),
-				'campaignId'            => 1,
-				'scrollPercent'         => (int) $settings['scroll_trigger_percent'],
-				'timeDelay'             => (int) $settings['time_delay_seconds'],
-				'cooldownHours'         => (int) $settings['repetition_cooldown_hours'],
-				'maxViews'              => (int) $settings['max_views'],
-				'enableExitIntent'      => ! empty( $settings['enable_exit_intent'] ),
-				'enableMobile'          => ! empty( $settings['enable_mobile'] ),
-				'enableCaptcha'         => ! empty( $settings['enable_captcha_validation'] ),
-				'turnstileEnabled'      => $turnstile_enabled,
-				'turnstileSiteKey'      => $turnstile_enabled ? (string) $settings['turnstile_site_key'] : '',
-				'turnstileResponseField'=> 'cf-turnstile-response',
+				'ajaxUrl'                => admin_url( 'admin-ajax.php' ),
+				'nonce'                  => wp_create_nonce( 'cmlc_nonce' ),
+				'pageId'                 => get_queried_object_id(),
+				'campaignId'             => (int) $campaign['id'],
+				'scrollPercent'          => (int) $campaign['scroll_trigger_percent'],
+				'timeDelay'              => (int) $campaign['time_delay_seconds'],
+				'cooldownHours'          => (int) $campaign['repetition_cooldown_hours'],
+				'maxViews'               => (int) $campaign['max_views'],
+				'enableExitIntent'       => ! empty( $campaign['enable_exit_intent'] ),
+				'enableMobile'           => ! empty( $campaign['enable_mobile'] ),
+				'enableCaptcha'          => ! empty( $settings['enable_captcha_validation'] ),
+				'turnstileEnabled'       => $turnstile_enabled,
+				'turnstileSiteKey'       => $turnstile_enabled ? (string) $settings['turnstile_site_key'] : '',
+				'turnstileResponseField' => 'cf-turnstile-response',
 			)
 		);
+
+		return $campaign;
 	}
 
 	/**
@@ -64,28 +77,31 @@ class CMLC_Renderer {
 	 * @return void
 	 */
 	public function render_infobar() {
-		$settings = CMLC_Settings::get();
-
-		if ( empty( $settings['enabled'] ) || ! $this->is_eligible_page( $settings ) ) {
+		$campaign = self::enqueue_assets( 0 );
+		if ( ! $campaign ) {
 			return;
 		}
 
-		$opacity = isset( $settings['bar_opacity'] ) ? (float) $settings['bar_opacity'] : 1;
-		$opacity = max( 0, min( 1, $opacity ) );
-		$bg_rgb  = $this->hex_to_rgb_string( (string) $settings['bg_color'] );
+		$settings = CMLC_Settings::get();
+		$opacity  = isset( $settings['bar_opacity'] ) ? (float) $settings['bar_opacity'] : 1;
+		$opacity  = max( 0, min( 1, $opacity ) );
+		$bg_rgb   = $this->hex_to_rgb_string( (string) $campaign['bg_color'] );
 
 		$style = sprintf(
 			'--cmlc-bg:%1$s;--cmlc-bg-rgb:%2$s;--cmlc-opacity:%3$s;--cmlc-text:%4$s;--cmlc-btn:%5$s;--cmlc-btn-text:%6$s;--cmlc-width:%7$s;--cmlc-height:%8$s;',
-			esc_attr( $settings['bg_color'] ),
+			esc_attr( $campaign['bg_color'] ),
 			esc_attr( $bg_rgb ),
 			esc_attr( (string) $opacity ),
-			esc_attr( $settings['text_color'] ),
-			esc_attr( $settings['button_color'] ),
-			esc_attr( $settings['button_text_color'] ),
+			esc_attr( $campaign['text_color'] ),
+			esc_attr( $campaign['button_color'] ),
+			esc_attr( $campaign['button_text_color'] ),
 			esc_attr( (string) $settings['bar_width'] ),
 			esc_attr( (string) $settings['bar_height'] )
 		);
 
+		$settings = $campaign;
+		$settings['turnstile_enabled']  = CMLC_Settings::get()['turnstile_enabled'];
+		$settings['turnstile_site_key'] = CMLC_Settings::get()['turnstile_site_key'];
 		include CMLC_PATH . 'templates/infobar.php';
 	}
 

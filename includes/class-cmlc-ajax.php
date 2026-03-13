@@ -70,14 +70,21 @@ class CMLC_Ajax {
 		}
 
 		$page_id       = isset( $_POST['page_id'] ) ? absint( wp_unslash( $_POST['page_id'] ) ) : 0;
-		$campaign_id   = isset( $_POST['campaign_id'] ) ? absint( wp_unslash( $_POST['campaign_id'] ) ) : 1;
+		$campaign_id   = isset( $_POST['campaign_id'] ) ? absint( wp_unslash( $_POST['campaign_id'] ) ) : 0;
 		$referrer_host = isset( $_POST['referrer_host'] ) ? sanitize_text_field( wp_unslash( $_POST['referrer_host'] ) ) : '';
+
+		$campaign = CMLC_Campaigns::resolve_campaign( $campaign_id );
+		if ( ! $campaign ) {
+			wp_send_json_error( array( 'message' => 'Campaign not found.' ), 404 );
+		}
+
+		$resolved_campaign_id = (int) $campaign['id'];
 
 		CMLC_Analytics::record_event(
 			'impression',
 			array(
 				'page_id'       => $page_id,
-				'campaign_id'   => $campaign_id,
+				'campaign_id'   => $resolved_campaign_id,
 				'referrer_host' => $referrer_host,
 			)
 		);
@@ -88,7 +95,12 @@ class CMLC_Ajax {
 		update_option( CMLC_Settings::OPTION_KEY, $settings );
 
 		$totals = CMLC_Analytics::get_totals();
-		wp_send_json_success( array( 'impressions' => $totals['impressions'] ) );
+		wp_send_json_success(
+			array(
+				'campaign_id' => $resolved_campaign_id,
+				'impressions' => $totals['impressions'],
+			)
+		);
 	}
 
 	/**
@@ -123,17 +135,26 @@ class CMLC_Ajax {
 		}
 
 		$page_id       = isset( $_POST['page_id'] ) ? absint( wp_unslash( $_POST['page_id'] ) ) : 0;
-		$campaign_id   = isset( $_POST['campaign_id'] ) ? absint( wp_unslash( $_POST['campaign_id'] ) ) : 1;
+		$campaign_id   = isset( $_POST['campaign_id'] ) ? absint( wp_unslash( $_POST['campaign_id'] ) ) : 0;
 		$referrer_host = isset( $_POST['referrer_host'] ) ? sanitize_text_field( wp_unslash( $_POST['referrer_host'] ) ) : '';
+
+		$campaign = CMLC_Campaigns::resolve_campaign( $campaign_id );
+		if ( ! $campaign ) {
+			wp_send_json_error( array( 'message' => 'Campaign not found.' ), 404 );
+		}
+
+		$resolved_campaign_id = (int) $campaign['id'];
 
 		CMLC_Analytics::record_event(
 			'submission',
 			array(
 				'page_id'       => $page_id,
-				'campaign_id'   => $campaign_id,
+				'campaign_id'   => $resolved_campaign_id,
 				'referrer_host' => $referrer_host,
 			)
 		);
+
+		CMLC_Analytics::record_lead( $resolved_campaign_id, $email );
 
 		// Legacy counters are retained for backward compatibility.
 		$settings                          = CMLC_Settings::get();
@@ -165,7 +186,7 @@ class CMLC_Ajax {
 		/**
 		 * Fires after lead form submission for CRM integrations.
 		 */
-		do_action( 'cmlc_lead_submitted', $email, $settings );
+		do_action( 'cmlc_lead_submitted', $email, $campaign );
 
 		wp_send_json_success( array( 'message' => 'Thanks! You are subscribed.' ) );
 	}
