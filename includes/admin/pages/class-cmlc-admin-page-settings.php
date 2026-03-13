@@ -14,12 +14,8 @@ class CMLC_Admin_Page_Settings implements CMLC_Admin_Page {
 	public function is_default() { return false; }
 
 	public function render() {
-		$settings_url = add_query_arg( 'page', 'cmlc-dashboard', admin_url( 'admin.php' ) );
-		?>
-		<div class="notice notice-info">
-			<p><?php printf( 'Settings have moved. <a href="%s">Go to Lead Capture Settings</a>.', esc_url( $settings_url ) ); ?></p>
-		</div>
-		<?php
+		$settings = new CMLC_Settings();
+		$settings->render_settings_content();
 	}
 
 	public function get_help_tabs() {
@@ -27,7 +23,7 @@ class CMLC_Admin_Page_Settings implements CMLC_Admin_Page {
 			array(
 				'id'      => 'settings',
 				'title'   => 'Settings guide',
-				'content' => 'Configure visual style, trigger behavior, and targeting from this page.',
+				'content' => 'Configure global defaults, visual style, trigger behavior, targeting, and Turnstile settings.',
 			),
 		);
 	}

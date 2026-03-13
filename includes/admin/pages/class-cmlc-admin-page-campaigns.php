@@ -14,19 +14,87 @@ class CMLC_Admin_Page_Campaigns implements CMLC_Admin_Page {
 	public function is_default() { return false; }
 
 	public function render() {
-		$settings = CMLC_Settings::get();
+		$campaigns = get_posts( array(
+			'post_type'      => CMLC_Campaigns::POST_TYPE,
+			'post_status'    => array( 'publish', 'draft' ),
+			'posts_per_page' => 50,
+			'meta_key'       => 'cmlc_priority',
+			'orderby'        => 'meta_value_num',
+			'order'          => 'DESC',
+		) );
+
+		$add_new_url = admin_url( 'post-new.php?post_type=' . CMLC_Campaigns::POST_TYPE );
 		?>
-		<div class="cmlc-section">
-			<h2>Campaign Configuration</h2>
-			<p>Campaign controls are configured from Settings. Review your active targeting and triggers below.</p>
-			<table class="widefat striped">
-				<tbody>
-					<tr><td><strong>Page Targeting Mode</strong></td><td><?php echo esc_html( $settings['page_target_mode'] ); ?></td></tr>
-					<tr><td><strong>Page IDs</strong></td><td><?php echo esc_html( $settings['page_ids'] ? $settings['page_ids'] : 'All pages' ); ?></td></tr>
-					<tr><td><strong>Allowed Referrers</strong></td><td><?php echo esc_html( $settings['allowed_referrers'] ? $settings['allowed_referrers'] : 'Any domain' ); ?></td></tr>
-					<tr><td><strong>Schedule Window</strong></td><td><?php echo esc_html( $settings['schedule_start'] ? $settings['schedule_start'] : 'No start' ); ?> — <?php echo esc_html( $settings['schedule_end'] ? $settings['schedule_end'] : 'No end' ); ?></td></tr>
-				</tbody>
-			</table>
+		<div class="cmlc-section" style="margin-top: 16px;">
+			<p>
+				<a href="<?php echo esc_url( $add_new_url ); ?>" class="button button-primary">Add New Campaign</a>
+			</p>
+
+			<?php if ( empty( $campaigns ) ) : ?>
+				<p>No campaigns yet. Create your first campaign to start capturing leads.</p>
+			<?php else : ?>
+				<table class="widefat striped" style="margin-top: 12px;">
+					<thead>
+						<tr>
+							<th><?php esc_html_e( 'Campaign', 'coppermont-lead-capture' ); ?></th>
+							<th><?php esc_html_e( 'Status', 'coppermont-lead-capture' ); ?></th>
+							<th><?php esc_html_e( 'Priority', 'coppermont-lead-capture' ); ?></th>
+							<th><?php esc_html_e( 'Headline', 'coppermont-lead-capture' ); ?></th>
+							<th><?php esc_html_e( 'Targeting', 'coppermont-lead-capture' ); ?></th>
+							<th><?php esc_html_e( 'Schedule', 'coppermont-lead-capture' ); ?></th>
+							<th><?php esc_html_e( 'Shortcode', 'coppermont-lead-capture' ); ?></th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ( $campaigns as $post ) :
+							$campaign = CMLC_Campaigns::get_campaign( $post->ID );
+							if ( ! $campaign ) {
+								$campaign = CMLC_Campaigns::defaults();
+							}
+							$edit_url = get_edit_post_link( $post->ID );
+							$status   = $campaign['status'] ?? 'inactive';
+
+							// Targeting summary.
+							$target_mode = $campaign['page_target_mode'] ?? 'all';
+							$page_ids    = $campaign['page_ids'] ?? '';
+							if ( 'all' === $target_mode ) {
+								$targeting = 'All pages';
+							} elseif ( 'include' === $target_mode ) {
+								$targeting = 'Include: ' . ( $page_ids ?: 'none' );
+							} else {
+								$targeting = 'Exclude: ' . ( $page_ids ?: 'none' );
+							}
+
+							// Schedule summary.
+							$sched_start = $campaign['schedule_start'] ?? '';
+							$sched_end   = $campaign['schedule_end'] ?? '';
+							if ( $sched_start || $sched_end ) {
+								$schedule = ( $sched_start ?: 'now' ) . ' &mdash; ' . ( $sched_end ?: 'ongoing' );
+							} else {
+								$schedule = 'Always';
+							}
+						?>
+							<tr>
+								<td>
+									<strong><a href="<?php echo esc_url( $edit_url ); ?>"><?php echo esc_html( $post->post_title ); ?></a></strong>
+								</td>
+								<td>
+									<?php if ( 'active' === $status ) : ?>
+										<span style="color: #065f46; font-weight: 600;">Active</span>
+									<?php else : ?>
+										<span style="color: #6b7280;">Inactive</span>
+									<?php endif; ?>
+								</td>
+								<td><?php echo esc_html( $campaign['priority'] ); ?></td>
+								<td><?php echo esc_html( $campaign['headline'] ); ?></td>
+								<td><?php echo esc_html( $targeting ); ?></td>
+								<td><?php echo wp_kses( $schedule, array( 'span' => array() ) ); ?></td>
+								<td><code>[coppermont_infobar campaign_id="<?php echo esc_attr( $post->ID ); ?>"]</code></td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+			<?php endif; ?>
 		</div>
 		<?php
 	}
@@ -36,7 +104,7 @@ class CMLC_Admin_Page_Campaigns implements CMLC_Admin_Page {
 			array(
 				'id'      => 'campaigns',
 				'title'   => 'Campaign setup',
-				'content' => 'Campaigns summarize targeting and scheduling. Use the Settings page to edit values.',
+				'content' => 'Create multiple campaigns with different headlines, targeting, and triggers. The highest-priority active campaign matching the current page will display automatically. Use the shortcode to place a specific campaign inline.',
 			),
 		);
 	}

@@ -30,14 +30,24 @@ class CMLC_Settings {
 	const DELETE_CONFIRMATION_PHRASE = 'DELETE ALL PLUGIN DATA';
 
 	/**
+	 * Whether hooks have been registered.
+	 *
+	 * @var bool
+	 */
+	private static $hooks_registered = false;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
-		add_action( 'admin_init', array( $this, 'handle_tab_save' ) );
-		add_action( 'wp_dashboard_setup', array( $this, 'register_dashboard_widget' ) );
-		add_action( 'admin_notices', array( $this, 'render_admin_notice' ) );
-		add_action( 'admin_post_cmlc_reset_analytics', array( $this, 'handle_reset_analytics' ) );
-		add_action( 'admin_post_cmlc_delete_all_data', array( $this, 'handle_delete_all_data' ) );
+		if ( ! self::$hooks_registered ) {
+			add_action( 'admin_init', array( $this, 'handle_tab_save' ) );
+			add_action( 'wp_dashboard_setup', array( $this, 'register_dashboard_widget' ) );
+			add_action( 'admin_notices', array( $this, 'render_admin_notice' ) );
+			add_action( 'admin_post_cmlc_reset_analytics', array( $this, 'handle_reset_analytics' ) );
+			add_action( 'admin_post_cmlc_delete_all_data', array( $this, 'handle_delete_all_data' ) );
+			self::$hooks_registered = true;
+		}
 	}
 
 	/**
@@ -347,7 +357,12 @@ class CMLC_Settings {
 	 *
 	 * @return void
 	 */
-	public function render_page() {
+	/**
+	 * Renders settings form content (without wrapper).
+	 *
+	 * @return void
+	 */
+	public function render_settings_content() {
 		if ( ! CMLC_Admin_Security::current_user_can_manage_options() ) {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'coppermont-lead-capture' ) );
 		}
@@ -360,16 +375,14 @@ class CMLC_Settings {
 			$active_tab = 'general';
 		}
 		?>
-		<div class="wrap">
-			<h1>Coppermont Lead Capture</h1>
-			<h2 class="nav-tab-wrapper">
-				<?php foreach ( $tabs as $tab_key => $tab_label ) : ?>
-					<?php $tab_class = ( $active_tab === $tab_key ) ? 'nav-tab nav-tab-active' : 'nav-tab'; ?>
-					<a class="<?php echo esc_attr( $tab_class ); ?>" href="<?php echo esc_url( add_query_arg( array( 'page' => 'cmlc-settings', 'tab' => $tab_key ), admin_url( 'admin.php' ) ) ); ?>"><?php echo esc_html( $tab_label ); ?></a>
-				<?php endforeach; ?>
-			</h2>
+		<h2 class="nav-tab-wrapper" style="margin-top: 16px;">
+			<?php foreach ( $tabs as $tab_key => $tab_label ) : ?>
+				<?php $tab_class = ( $active_tab === $tab_key ) ? 'nav-tab nav-tab-active' : 'nav-tab'; ?>
+				<a class="<?php echo esc_attr( $tab_class ); ?>" href="<?php echo esc_url( add_query_arg( array( 'page' => 'cmlc-settings', 'tab' => $tab_key ), admin_url( 'admin.php' ) ) ); ?>"><?php echo esc_html( $tab_label ); ?></a>
+			<?php endforeach; ?>
+		</h2>
 
-			<?php settings_errors( 'cmlc_settings' ); ?>
+		<?php settings_errors( 'cmlc_settings' ); ?>
 
 			<?php if ( in_array( $active_tab, array( 'analytics', 'leads' ), true ) ) : ?>
 				<?php if ( 'analytics' === $active_tab ) : ?>
@@ -462,6 +475,19 @@ class CMLC_Settings {
 					<?php submit_button(); ?>
 				</form>
 			<?php endif; ?>
+		<?php
+	}
+
+	/**
+	 * Renders full standalone settings page (with wrapper).
+	 *
+	 * @return void
+	 */
+	public function render_page() {
+		?>
+		<div class="wrap">
+			<h1>Coppermont Lead Capture</h1>
+			<?php $this->render_settings_content(); ?>
 		</div>
 		<?php
 	}
