@@ -292,7 +292,7 @@ class CMLC_Leads_Admin {
 	 * @return string
 	 */
 	private static function sanitize_csv_field( $value ) {
-		if ( '' !== $value && preg_match( '/^[=+\-@\t\r]/', $value ) ) {
+		if ( '' !== $value && preg_match( '/^[=+\-@\t\r|!]/', $value ) ) {
 			return "'" . $value;
 		}
 		return $value;

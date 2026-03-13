@@ -649,6 +649,7 @@ class CMLC_Settings {
 		$confirmation = isset( $_POST['cmlc_delete_confirmation'] ) ? sanitize_text_field( wp_unslash( $_POST['cmlc_delete_confirmation'] ) ) : '';
 		if ( self::DELETE_CONFIRMATION_PHRASE !== $confirmation ) {
 			$this->redirect_to_data_management( 'delete_confirmation_mismatch' );
+			return;
 		}
 
 		$result = CMLC_Data_Manager::delete_all_plugin_data();
